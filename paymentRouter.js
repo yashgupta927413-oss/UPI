@@ -301,6 +301,7 @@ function createPaymentRouter(dbPool) {
         } else {
           await getDb().query('UPDATE personal_upi_pool SET last_ping = CURRENT_TIMESTAMP WHERE user_id = $1', [userId]);
         }
+        await logIncomingSms(userId, targetUpi, smsBody, true, 'TEST_PING');
         return res.status(200).json({
           success: true,
           test: true,
@@ -312,12 +313,24 @@ function createPaymentRouter(dbPool) {
       }
     }
 
+    // Since a real message was received, update last_ping to indicate live status
+    try {
+      if (targetUpi) {
+        await getDb().query('UPDATE personal_upi_pool SET last_ping = CURRENT_TIMESTAMP WHERE upi_id = $1 AND user_id = $2', [targetUpi.trim(), userId]);
+      } else {
+        await getDb().query('UPDATE personal_upi_pool SET last_ping = CURRENT_TIMESTAMP WHERE user_id = $1', [userId]);
+      }
+    } catch (pingErr) {
+      console.warn('[SMS Webhook Activity] Failed to update last_ping:', pingErr.message);
+    }
+
     console.log(`[SMS Webhook - User #${userId}${targetUpi ? ` - UPI ${targetUpi}` : ''}] Received SMS: "${smsBody}"`);
 
     // Parse credit details from SMS
     const parsed = parseCreditSMS(smsBody);
     if (!parsed) {
       console.log(`[SMS Webhook - User #${userId}] SMS parsed as non-credit or failed to match patterns.`);
+      await logIncomingSms(userId, targetUpi, smsBody, false, 'NON_CREDIT');
       return res.status(200).json({ 
         success: true, 
         matched: false, 
@@ -354,6 +367,7 @@ function createPaymentRouter(dbPool) {
       if (duplicateCheck.rows.length > 0) {
         await client.query('COMMIT');
         console.log(`[SMS Webhook - User #${userId}] UTR ${utr} was already reconciled. Ignoring.`);
+        await logIncomingSms(userId, targetUpi, smsBody, true, duplicateCheck.rows[0].order_id);
         return res.status(200).json({ 
           success: true, 
           reconciled: true, 
@@ -415,6 +429,7 @@ function createPaymentRouter(dbPool) {
           unmatchedClient.release();
         }
 
+        await logIncomingSms(userId, targetUpi, smsBody, false, 'UNMATCHED_ALERT');
         return res.status(200).json({
           success: true,
           reconciled: false,
@@ -474,6 +489,7 @@ function createPaymentRouter(dbPool) {
           console.error(`[SMS Webhook - User #${userId}] Shopify update crash for order ${orderId}:`, err);
         });
 
+      await logIncomingSms(userId, assignedUpi, smsBody, true, orderId);
       return res.status(200).json({
         success: true,
         reconciled: true,
@@ -663,6 +679,19 @@ function createPaymentRouter(dbPool) {
       return res.status(500).json({ error: 'Database transaction update failed.' });
     }
   });
+
+  // Helper to log forwarded SMS messages
+  async function logIncomingSms(userId, assignedUpi, rawBody, processed, matchedOrderId) {
+    try {
+      const query = `
+        INSERT INTO sms_webhook_logs (user_id, assigned_upi, raw_body, processed, matched_order_id)
+        VALUES ($1, $2, $3, $4, $5)
+      `;
+      await getDb().query(query, [userId, assignedUpi, rawBody, processed, matchedOrderId]);
+    } catch (err) {
+      console.error('[SMS Logs] Failed to write incoming SMS log:', err.message);
+    }
+  }
 
   return router;
 }

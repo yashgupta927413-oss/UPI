@@ -983,6 +983,18 @@
       background: #1a1528;
       color: #fff;
     }
+
+    @keyframes pulse-green {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1524,6 +1536,40 @@
                   <tr>
                     <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
                       No webhook events dispatched yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SMS WEBHOOK FORWARDER LOGS -->
+          <div class="guide-section" style="border-top: 1px solid var(--glass-border); padding-top: 2rem; margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h3 style="font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">📱 SMS Webhook Forwarder Logs (Incoming Texts)</h3>
+              <button class="btn btn-secondary btn-sm" onclick="fetchSmsLogs()">
+                🔄 Refresh SMS Logs
+              </button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+              Inspect raw text messages received by the gateway from your Android forwarding device to verify connection status, format match, and match results.
+            </p>
+            
+            <div class="table-container" style="max-height: 350px; overflow-y: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Target VPA</th>
+                    <th>Raw SMS Content</th>
+                    <th>Status</th>
+                    <th>Result / Order ID</th>
+                  </tr>
+                </thead>
+                <tbody id="sms-logs-tbody">
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                      No forwarded SMS logs recorded yet.
                     </td>
                   </tr>
                 </tbody>
@@ -2241,6 +2287,7 @@
         await fetchLogs();
         await fetchSettings();
         await fetchWebhookLogs();
+        await fetchSmsLogs();
         
         // Auto-refresh loops (every 10s)
         setInterval(() => {
@@ -2249,7 +2296,10 @@
           if (document.getElementById('tab-pools').classList.contains('active')) fetchVPAPool();
           fetchLogs();
           if (document.getElementById('tab-settings').classList.contains('active')) fetchSettings();
-          if (document.getElementById('tab-developer-guide').classList.contains('active')) fetchWebhookLogs();
+          if (document.getElementById('tab-developer-guide').classList.contains('active')) {
+            fetchWebhookLogs();
+            fetchSmsLogs();
+          }
         }, 10000);
       } catch (err) {
         console.warn('Init dashboard failed:', err.message);
@@ -2432,9 +2482,28 @@
           else if (diffMins < 60) pingStr = `${diffMins}m ago`;
           else pingStr = pingDate.toLocaleDateString();
           
-          connectionBadge = `<span class="status-badge status-approved" style="font-size: 0.62rem; background: #00ca72; color: #fff; padding: 0.1rem 0.35rem; border-radius: 4px;" title="Last SMS forward received at ${pingDate.toLocaleString()}">📶 Live (${pingStr})</span>`;
+          if (diffMins <= 15) {
+            connectionBadge = `
+              <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; font-weight: 600; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.15rem 0.5rem; border-radius: 20px;" title="Last SMS forward received at ${pingDate.toLocaleString()}">
+                <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #10b981; animation: pulse-green 1.5s infinite;"></span>
+                Live (${pingStr})
+              </span>
+            `;
+          } else {
+            connectionBadge = `
+              <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; font-weight: 600; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 20px;" title="Last SMS forward received at ${pingDate.toLocaleString()}">
+                <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #ef4444;"></span>
+                Offline (${pingStr})
+              </span>
+            `;
+          }
         } else {
-          connectionBadge = `<span class="status-badge" style="font-size: 0.62rem; background: rgba(255,255,255,0.1); color: var(--color-text-subdued); padding: 0.1rem 0.35rem; border-radius: 4px;">⚠️ Unchecked</span>`;
+          connectionBadge = `
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; font-weight: 600; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 20px;">
+              <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #ef4444;"></span>
+              Unchecked
+            </span>
+          `;
         }
         
         const card = document.createElement('div');
@@ -2892,6 +2961,63 @@
         await fetchWebhookLogs();
       } catch (err) {
         showToast(err.message, 'error');
+      }
+    }
+
+    // Fetch forwarded SMS webhook logs
+    async function fetchSmsLogs() {
+      const tbody = document.getElementById('sms-logs-tbody');
+      if (!tbody) return;
+      try {
+        const res = await apiRequest('/api/pool/sms-logs');
+        if (!res.ok) throw new Error();
+        const logs = await res.json();
+        
+        tbody.innerHTML = '';
+        if (logs.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                No forwarded SMS logs recorded yet.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        logs.forEach(log => {
+          const dateObj = new Date(log.created_at);
+          const timeStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const statusClass = log.processed ? 'status-approved' : 'status-pending';
+          const statusText = log.processed ? 'PROCESSED' : 'UNMATCHED';
+          
+          let resultText = '';
+          if (log.matched_order_id === 'TEST_PING') {
+            resultText = '📶 Connection Test Ping';
+          } else if (log.matched_order_id === 'NON_CREDIT') {
+            resultText = 'ℹ️ Non-credit SMS';
+          } else if (log.matched_order_id === 'UNMATCHED_ALERT') {
+            resultText = '⚠️ Unmatched Transaction';
+          } else if (log.matched_order_id) {
+            resultText = `✅ Order #${escapeHtml(log.matched_order_id)}`;
+          } else {
+            resultText = 'Awaiting Match';
+          }
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${timeStr}</td>
+            <td><code>${escapeHtml(log.assigned_upi || 'Global/Any')}</code></td>
+            <td style="font-family: monospace; font-size: 0.78rem; opacity: 0.9; max-width: 400px; overflow-wrap: break-word; white-space: normal;">
+              ${escapeHtml(log.raw_body)}
+            </td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td><b>${resultText}</b></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Failed to load forwarded SMS logs:', err.message);
       }
     }
 

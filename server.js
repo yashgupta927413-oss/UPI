@@ -199,6 +199,19 @@ async function initializeDbPool(databaseUrl) {
       );
     `);
 
+    // Auto-create SMS Webhook incoming logs table if not exists
+    await newPool.query(`
+      CREATE TABLE IF NOT EXISTS sms_webhook_logs (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          assigned_upi VARCHAR(255),
+          raw_body TEXT NOT NULL,
+          processed BOOLEAN DEFAULT FALSE,
+          matched_order_id VARCHAR(255),
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+    `);
+
     // Auto-create Admin Audit Log table if not exists
     await newPool.query(`
       CREATE TABLE IF NOT EXISTS admin_audit_log (

@@ -262,6 +262,27 @@ function createPoolRouter(dbPool) {
   });
 
   // ==========================================
+  // GET /api/pool/sms-logs
+  // Lists incoming forwarded SMS logs scoped to merchant
+  // ==========================================
+  router.get('/sms-logs', async (req, res) => {
+    try {
+      const query = `
+        SELECT id, assigned_upi, raw_body, processed, matched_order_id, created_at
+        FROM sms_webhook_logs
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 50;
+      `;
+      const dbRes = await getDb().query(query, [req.user.id]);
+      return res.status(200).json(dbRes.rows);
+    } catch (error) {
+      console.error('[Pool Router] Error listing SMS webhook logs:', error);
+      return res.status(500).json({ error: 'Failed to fetch SMS logs.' });
+    }
+  });
+
+  // ==========================================
   // POST /api/pool/webhook-logs/:id/retry
   // Retries sending a webhook for a specific delivery log scoped to merchant
   // ==========================================
