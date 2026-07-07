@@ -1331,8 +1331,31 @@
 
         <div class="glass-card">
           <div class="guide-section">
-            <h3>🚀 Rest API Integration</h3>
-            <p>You can programmatically initiate transactions and query status updates using your secure API key. Include your API token inside the headers of your requests.</p>
+            <h3 style="color: var(--color-secondary); font-size: 1.3rem;">🚀 End-to-End API Integration Guide</h3>
+            <p style="margin-bottom: 1.25rem;">Follow these 5 simple steps to integrate the P2P UPI Payment Gateway into your custom website, app, or billing system:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; border-left: 2px solid var(--color-primary); padding-left: 1rem; margin-bottom: 2rem;">
+              <div style="font-size: 0.85rem; line-height: 1.4;">
+                <b style="color: #fff;">Step 1: Initiate Transaction (Backend-to-Gateway)</b><br>
+                When a customer checks out, your server calls the <code style="color: #00f2fe;">POST /api/external/pay/initiate</code> endpoint with the amount and a unique order ID. The gateway automatically chooses a VPA from the pool, applies paise-level fingerprinting (e.g., ₹500.03 instead of ₹500.00), and returns a unique <code>checkoutUrl</code>.
+              </div>
+              <div style="font-size: 0.85rem; line-height: 1.4;">
+                <b style="color: #fff;">Step 2: Redirect Customer (Frontend-to-Checkout)</b><br>
+                Redirect the customer to the returned <code>checkoutUrl</code> in their browser. They will see your customized branding logo, payment timer, and a dynamic QR code for scan-and-pay, or a "Pay Now" deep link button if they are on a mobile device.
+              </div>
+              <div style="font-size: 0.85rem; line-height: 1.4;">
+                <b style="color: #fff;">Step 3: Device SMS Forwarding (Mobile Alert Sync)</b><br>
+                When the customer pays, your bank sends a transaction credit SMS alert to your Android phone. The SMS forwarder app on your phone posts the SMS to your specific VPA webhook URL: <code style="color: #00f2fe;">POST /api/pay/sms-webhook/:userId/:assignedUpi?token=YOUR_API_KEY</code>.
+              </div>
+              <div style="font-size: 0.85rem; line-height: 1.4;">
+                <b style="color: #fff;">Step 4: Auto-Reconciliation &amp; Settlement</b><br>
+                The gateway matches the SMS amount and VPA against active pending transactions. It resolves and approves the order, updates pool capacity, and releases the paise fraction for subsequent orders.
+              </div>
+              <div style="font-size: 0.85rem; line-height: 1.4;">
+                <b style="color: #fff;">Step 5: Receive Instant Webhook Notification (Gateway-to-Backend)</b><br>
+                The gateway dispatches a secure JSON payload to the <b>Merchant Webhook Endpoint</b> configured in your Settings, notifying your server of the successful checkout payment so you can deliver the digital goods/services instantly.
+              </div>
+            </div>
           </div>
 
           <div class="guide-section">
@@ -1352,7 +1375,7 @@
             <p>Send a POST request to initiate a new checkout routing window:</p>
             <div class="code-block">
               <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-              <span>POST /api/external/pay/initiate<br>
+              <span>POST <span class="doc-base-url">http://localhost:3000</span>/api/external/pay/initiate<br>
   Content-Type: application/json<br><br>
   {<br>
   &nbsp;&nbsp;"orderId": "order_1001",<br>
@@ -1379,7 +1402,7 @@
             <p>Query the status of an order using a simple GET endpoint:</p>
             <div class="code-block">
               <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-              <span>GET /api/external/pay/status/order_1001</span>
+              <span>GET <span class="doc-base-url">http://localhost:3000</span>/api/external/pay/status/order_1001</span>
             </div>
 
             <h4 style="font-size: 0.95rem; margin-top: 1rem; color: #fff;">Expected JSON Response (200 OK):</h4>
@@ -3440,6 +3463,9 @@
         
         const docApiUrlEl = document.getElementById('doc-api-url');
         if (docApiUrlEl) docApiUrlEl.textContent = window.location.origin;
+        document.querySelectorAll('.doc-base-url').forEach(el => {
+          el.textContent = window.location.origin;
+        });
       } catch (err) {
         console.error('[Settings] Error fetching config:', err.message);
       }
