@@ -31,10 +31,22 @@ function createPoolRouter(dbPool) {
   router.get('/', async (req, res) => {
     try {
       const query = `
-        SELECT upi_id, account_holder, daily_amount_limit, daily_count_limit, current_amount, current_count, is_active, weight, cooldown_until
-        FROM personal_upi_pool
-        WHERE user_id = $1
-        ORDER BY upi_id;
+        SELECT p.upi_id, p.account_holder, p.daily_amount_limit, p.daily_count_limit, 
+               p.current_amount, p.current_count, p.is_active, p.weight, p.cooldown_until,
+               COALESCE(t.total_requests, 0)::int as total_requests,
+               COALESCE(t.approved_requests, 0)::int as approved_requests,
+               COALESCE(t.total_approved_volume, 0)::numeric as total_approved_volume
+        FROM personal_upi_pool p
+        LEFT JOIN (
+          SELECT assigned_upi,
+                 COUNT(*) as total_requests,
+                 COUNT(*) FILTER (WHERE status = 'APPROVED') as approved_requests,
+                 SUM(final_amount) FILTER (WHERE status = 'APPROVED') as total_approved_volume
+          FROM transaction_logs
+          GROUP BY assigned_upi
+        ) t ON p.upi_id = t.assigned_upi
+        WHERE p.user_id = $1
+        ORDER BY p.upi_id;
       `;
       const dbRes = await getDb().query(query, [req.user.id]);
       return res.status(200).json(dbRes.rows);
@@ -246,6 +258,39 @@ function createPoolRouter(dbPool) {
     } catch (error) {
       console.error('[Pool Router] Error listing webhook delivery logs:', error);
       return res.status(500).json({ error: 'Failed to fetch webhook delivery logs.' });
+    }
+  });
+
+  // ==========================================
+  // POST /api/pool/webhook-logs/:id/retry
+  // Retries sending a webhook for a specific delivery log scoped to merchant
+  // ==========================================
+  router.post('/webhook-logs/:id/retry', async (req, res) => {
+    const { id } = req.params;
+    try {
+      // 1. Fetch webhook delivery log
+      const logQuery = 'SELECT order_id FROM webhook_delivery_logs WHERE id = $1 AND user_id = $2';
+      const logRes = await getDb().query(logQuery, [id, req.user.id]);
+      if (logRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Webhook log entry not found or unauthorized.' });
+      }
+      const orderId = logRes.rows[0].order_id;
+
+      // 2. Fetch the corresponding transaction details
+      const txnQuery = 'SELECT order_id, base_amount, final_amount, assigned_upi, status, utr_number FROM transaction_logs WHERE order_id = $1 AND user_id = $2';
+      const txnRes = await getDb().query(txnQuery, [orderId, req.user.id]);
+      if (txnRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Matching transaction log details not found.' });
+      }
+
+      // 3. Re-trigger webhook dispatcher
+      const { triggerWebhook } = require('./webhookDispatcher');
+      await triggerWebhook(req.user.id, txnRes.rows[0], getDb());
+
+      return res.status(200).json({ success: true, message: `Webhook retry event successfully dispatched for order #${orderId}.` });
+    } catch (error) {
+      console.error('[Pool Router] Error retrying webhook delivery:', error);
+      return res.status(500).json({ error: 'Failed to retry webhook delivery.' });
     }
   });
 

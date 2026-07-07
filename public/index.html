@@ -1220,7 +1220,7 @@
         <div class="glass-card table-card">
           
           <div class="table-header-row">
-            <div class="search-input-group">
+            <div class="search-input-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <input type="text" id="search-logs-input" class="form-input" placeholder="Search Order ID or VPA..." oninput="filterLogs()">
               <select id="filter-logs-status" class="form-input form-select" style="max-width: 130px;" onchange="filterLogs()">
                 <option value="ALL">All Statuses</option>
@@ -1228,6 +1228,8 @@
                 <option value="PENDING">Pending</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
+              <input type="date" id="filter-logs-start" class="form-input" style="max-width: 135px; font-size: 0.78rem;" title="Start Date" onchange="filterLogs()">
+              <input type="date" id="filter-logs-end" class="form-input" style="max-width: 135px; font-size: 0.78rem;" title="End Date" onchange="filterLogs()">
             </div>
             <button class="btn btn-secondary btn-sm" onclick="exportTransactionsCSV()">
               📥 Export CSV
@@ -1514,6 +1516,7 @@
                     <th>Status</th>
                     <th>HTTP Code</th>
                     <th>Response Snippet</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="webhook-logs-tbody">
@@ -2400,6 +2403,11 @@
         const limitAmt = parseFloat(vpa.daily_amount_limit);
         const remaining = Math.max(0, limitAmt - currentAmt);
         
+        const totalRequests = parseInt(vpa.total_requests) || 0;
+        const approvedRequests = parseInt(vpa.approved_requests) || 0;
+        const totalRecv = parseFloat(vpa.total_approved_volume) || 0;
+        const successRate = totalRequests === 0 ? 100 : Math.round((approvedRequests / totalRequests) * 100);
+        
         let progressPercent = 0;
         if (limitAmt > 0) {
           progressPercent = Math.min(100, Math.round((currentAmt / limitAmt) * 100));
@@ -2446,8 +2454,14 @@
               <div class="limit-progress-fill" style="width: ${progressPercent}%; background-color: ${progressPercent > 80 ? 'var(--color-danger)' : 'var(--color-secondary)'};"></div>
             </div>
             
-            <div style="font-size: 0.72rem; color: var(--color-text-subdued); margin: 0.5rem 0 0.75rem 0; font-family: 'JetBrains Mono', monospace;">
-              ⚖️ Routing weight: <b>${parseInt(vpa.weight) || 1}x</b>
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--color-text-subdued); margin: 0.5rem 0 0.5rem 0; font-family: 'JetBrains Mono', monospace;">
+              <span>⚖️ Weight: <b>${parseInt(vpa.weight) || 1}x</b></span>
+              <span>🔄 Requests: <b>${totalRequests}</b></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--color-text-subdued); margin-bottom: 0.75rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 0.5rem; font-family: 'JetBrains Mono', monospace;">
+              <span>📈 Success: <b style="color: ${successRate > 75 ? 'var(--color-success)' : successRate > 40 ? '#ffcc00' : 'var(--color-danger)'}">${successRate}%</b></span>
+              <span>💰 Total Recv: <b>₹${totalRecv.toFixed(0)}</b></span>
             </div>
 
             <div class="card-actions-row">
@@ -2791,11 +2805,33 @@
             <td><span class="status-badge ${badgeClass}">${log.success ? 'DELIVERED' : 'FAILED'}</span></td>
             <td><code>${escapeHtml(log.response_code || 'CONN_ERR')}</code></td>
             <td><span style="font-size: 0.78rem; font-family: monospace; opacity: 0.8;" title="${escapeHtml(log.response_body || '')}">${escapeHtml((log.response_body || '').substring(0, 30)) || 'None'}</span></td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="retryWebhook(${log.id})" style="padding: 0.2rem 0.4rem; font-size: 0.65rem; height: auto;">
+                🔁 Retry
+              </button>
+            </td>
           `;
           tbody.appendChild(row);
         });
       } catch (err) {
         console.error('Failed to load webhook logs:', err.message);
+      }
+    }
+
+    // Retry webhook dispatch event
+    async function retryWebhook(logId) {
+      try {
+        const res = await apiRequest(`/api/pool/webhook-logs/${logId}/retry`, {
+          method: 'POST'
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to retry webhook.');
+        }
+        showToast('Webhook retry request dispatched successfully!', 'success');
+        await fetchWebhookLogs();
+      } catch (err) {
+        showToast(err.message, 'error');
       }
     }
 
@@ -3199,6 +3235,11 @@
     function filterLogs() {
       const query = document.getElementById('search-logs-input').value.toLowerCase().trim();
       const statusFilter = document.getElementById('filter-logs-status').value;
+      const startDateVal = document.getElementById('filter-logs-start').value;
+      const endDateVal = document.getElementById('filter-logs-end').value;
+
+      const startDate = startDateVal ? new Date(startDateVal + 'T00:00:00') : null;
+      const endDate = endDateVal ? new Date(endDateVal + 'T23:59:59') : null;
 
       const filtered = localLogs.filter(log => {
         const matchesQuery = log.order_id.toLowerCase().includes(query) || 
@@ -3207,7 +3248,14 @@
         
         const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
 
-        return matchesQuery && matchesStatus;
+        let matchesDate = true;
+        if (startDate || endDate) {
+          const logDate = new Date(log.created_at);
+          if (startDate && logDate < startDate) matchesDate = false;
+          if (endDate && logDate > endDate) matchesDate = false;
+        }
+
+        return matchesQuery && matchesStatus && matchesDate;
       });
 
       renderLogs(filtered);
