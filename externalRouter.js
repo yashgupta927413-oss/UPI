@@ -80,7 +80,8 @@ function createExternalRouter(dbPool) {
         const txn = existingRes.rows[0];
         await client.query('COMMIT');
         
-        const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(txn.account_holder)}&am=${txn.final_amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
+        const payeeName = req.user.business_name || txn.account_holder;
+        const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(payeeName)}&am=${txn.final_amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
         
         const baseUrl = (req.user.gateway_url || '').replace(/\/$/, '') || `${req.protocol}://${req.get('host')}`;
         const checkoutUrl = `${baseUrl}/checkout/${encodeURIComponent(txn.order_id)}`;
@@ -186,7 +187,8 @@ function createExternalRouter(dbPool) {
       await client.query('COMMIT');
       const txn = insertRes.rows[0];
 
-      const upiUri = `upi://pay?pa=${encodeURIComponent(assignedUpi)}&pn=${encodeURIComponent(accountHolder)}&am=${finalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(orderId)}`;
+      const payeeName = req.user.business_name || accountHolder;
+      const upiUri = `upi://pay?pa=${encodeURIComponent(assignedUpi)}&pn=${encodeURIComponent(payeeName)}&am=${finalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(orderId)}`;
       
       const baseUrl = (req.user.gateway_url || '').replace(/\/$/, '') || `${req.protocol}://${req.get('host')}`;
       const checkoutUrl = `${baseUrl}/checkout/${encodeURIComponent(orderId)}`;

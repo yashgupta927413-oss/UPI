@@ -73,8 +73,8 @@ function createPaymentRouter(dbPool) {
       if (existingRes.rows.length > 0) {
         const txn = existingRes.rows[0];
         await client.query('COMMIT');
-        
-        const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(txn.account_holder)}&am=${txn.final_amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
+        const payeeName = userRes.rows[0].business_name || txn.account_holder;
+        const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(payeeName)}&am=${txn.final_amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
         
         return res.status(200).json({
           orderId: txn.order_id,
@@ -191,7 +191,8 @@ function createPaymentRouter(dbPool) {
       await client.query('COMMIT');
 
       const txn = insertRes.rows[0];
-      const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(accountHolder)}&am=${finalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(orderId)}`;
+      const payeeName = userRes.rows[0].business_name || accountHolder;
+      const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${finalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(orderId)}`;
 
       return res.status(201).json({
         orderId: txn.order_id,
@@ -567,7 +568,8 @@ function createPaymentRouter(dbPool) {
       }
 
       const txn = dbRes.rows[0];
-      const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(txn.account_holder)}&am=${parseFloat(txn.final_amount).toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
+      const payeeName = txn.business_name || txn.account_holder;
+      const upiUri = `upi://pay?pa=${encodeURIComponent(txn.assigned_upi)}&pn=${encodeURIComponent(payeeName)}&am=${parseFloat(txn.final_amount).toFixed(2)}&cu=INR&tn=${encodeURIComponent(txn.order_id)}`;
 
       return res.status(200).json({
         success: true,
