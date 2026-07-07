@@ -1,0 +1,3731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPI PayRoute - SaaS Merchant Portal</title>
+  
+  <!-- Import Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Import Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* DESIGN SYSTEM: Obsidion-Neon Premium Theme */
+    :root {
+      --bg-dark: #06040d;
+      --bg-sidebar: rgba(11, 7, 26, 0.85);
+      --glass-card: rgba(20, 15, 38, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-hover: rgba(255, 255, 255, 0.12);
+      
+      --color-primary: #8a2be2;
+      --color-primary-glow: rgba(138, 43, 226, 0.35);
+      --color-secondary: #00f2fe;
+      --color-secondary-glow: rgba(0, 242, 254, 0.2);
+      --color-accent: #ff007f;
+      --color-success: #00e676;
+      --color-success-glow: rgba(0, 230, 118, 0.2);
+      --color-pending: #ffc107;
+      --color-pending-glow: rgba(255, 193, 7, 0.15);
+      --color-danger: #ff1744;
+      --color-text: #f3f1f8;
+      --color-text-subdued: #a29db8;
+      
+      --transition-speed: 0.25s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--color-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* CUSTOM SCROLLBARS */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* AUTH & WIZARD LAYOUTS */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #070512 0%, #0d0920 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .auth-card {
+      width: 90%;
+      max-width: 440px;
+      background: rgba(20, 15, 38, 0.7);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .auth-card h2 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .auth-card p {
+      font-size: 0.85rem;
+      color: var(--color-text-subdued);
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .auth-switch {
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 1.25rem;
+      color: var(--color-text-subdued);
+    }
+
+    .auth-link {
+      color: var(--color-secondary);
+      cursor: pointer;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    /* MAIN SYSTEM WRAPPER */
+    .dashboard-wrapper {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+      width: 100%;
+      background: radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.08) 0%, transparent 60%);
+      display: none;
+    }
+
+    /* LEFT FIXED SIDEBAR */
+    .sidebar {
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-right: 1px solid var(--glass-border);
+      padding: 2rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-left: 0.5rem;
+    }
+
+    .brand-logo {
+      font-size: 1.75rem;
+      color: var(--color-secondary);
+      animation: pulseBrand 2s infinite alternate;
+    }
+
+    @keyframes pulseBrand {
+      0% { transform: scale(1); filter: drop-shadow(0 0 2px var(--color-secondary)); }
+      100% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--color-secondary)); }
+    }
+
+    .brand-details h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .brand-details p {
+      font-size: 0.7rem;
+      color: var(--color-text-subdued);
+      margin-top: 0.2rem;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--glass-border);
+      margin: 0.25rem 0;
+    }
+
+    .menu-section-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-subdued);
+      margin-bottom: 0.25rem;
+      padding-left: 0.5rem;
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .menu-item {
+      background: transparent;
+      border: none;
+      color: var(--color-text-subdued);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.65rem 0.85rem;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all var(--transition-speed) ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: left;
+      width: 100%;
+    }
+
+    .menu-item:hover, .menu-item.active {
+      color: #fff;
+      background: var(--glass-hover);
+    }
+
+    .menu-item.active {
+      border-left: 3px solid var(--color-secondary);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 0 10px 10px 0;
+    }
+
+    /* PROFILE FOOTER WIDGET */
+    .sidebar-profile {
+      margin-top: auto;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: relative;
+    }
+
+    .profile-avatar {
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .profile-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .profile-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .profile-action {
+      font-size: 0.7rem;
+      color: var(--color-danger);
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+      text-align: left;
+    }
+
+    /* RIGHT MAIN CONTENT AREA */
+    .main-content {
+      padding: 2.5rem 3.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* PAGE HEADER */
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 1.5rem;
+    }
+
+    .page-title-section h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .page-title-section p {
+      font-size: 0.88rem;
+      color: var(--color-text-subdued);
+      margin-top: 0.25rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(0, 230, 118, 0.08);
+      border: 1px solid rgba(0, 230, 118, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      color: var(--color-success);
+    }
+
+    .status-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-success);
+      box-shadow: 0 0 8px var(--color-success);
+      animation: pulseGreen 1.5s infinite alternate;
+    }
+
+    @keyframes pulseGreen {
+      0% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    /* METRICS / STATS GRID */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .glass-card {
+      background: var(--glass-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+      transition: all var(--transition-speed) ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(20, 15, 38, 0.55);
+    }
+
+    .stat-card h3 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-subdued);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .stat-description {
+      font-size: 0.75rem;
+      color: var(--color-text-subdued);
+      margin-top: 0.5rem;
+    }
+
+    .headroom-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      margin-top: 0.6rem;
+      overflow: hidden;
+    }
+
+    .headroom-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+      border-radius: 10px;
+      transition: width 1s ease-out;
+    }
+
+    /* TAB SCREENS */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* POOLS CARD GRID */
+    .vpa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* NEON BANK CARD DESIGNS */
+    .bank-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(30, 20, 70, 0.6) 0%, rgba(10, 5, 25, 0.85) 100%);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 200px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .bank-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--color-secondary);
+      box-shadow: 0 15px 35px var(--color-secondary-glow);
+    }
+
+    .bank-card::before {
+      content: '';
+      position: absolute;
+      top: -20%; right: -20%;
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, var(--color-primary-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .bank-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .bank-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      color: #fff;
+    }
+
+    .card-switch {
+      transform: scale(0.85);
+    }
+
+    .bank-vpa {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 1.5rem 0 0.5rem;
+      word-break: break-all;
+    }
+
+    .bank-holder {
+      font-size: 0.8rem;
+      color: var(--color-text-subdued);
+    }
+
+    .card-limit-stats {
+      margin-top: 1.25rem;
+      border-top: 1px dashed var(--glass-border);
+      padding-top: 0.75rem;
+    }
+
+    .limit-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--color-text-subdued);
+      margin-bottom: 0.25rem;
+    }
+
+    .limit-progress-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .limit-progress-fill {
+      height: 100%;
+      background: var(--color-secondary);
+      border-radius: 4px;
+    }
+
+    .card-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    /* CONSOLE TABLES */
+    .table-card {
+      padding: 1.5rem 0;
+      overflow: hidden;
+    }
+
+    .table-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem 1.25rem;
+      border-bottom: 1px solid var(--glass-border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input-group {
+      display: flex;
+      gap: 0.5rem;
+      flex: 1;
+      max-width: 380px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      padding: 1rem 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-subdued);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    td {
+      padding: 1rem 1.5rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid var(--glass-border);
+      color: var(--color-text);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* BADGES */
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+
+    .status-approved {
+      background: rgba(0, 230, 118, 0.08);
+      color: var(--color-success);
+      border: 1px solid rgba(0, 230, 118, 0.2);
+    }
+
+    .status-pending {
+      background: rgba(255, 193, 7, 0.08);
+      color: var(--color-pending);
+      border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    .status-cancelled {
+      background: rgba(255, 23, 68, 0.08);
+      color: var(--color-danger);
+      border: 1px solid rgba(255, 23, 68, 0.2);
+    }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .form-input {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.65rem 0.9rem;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: all var(--transition-speed) ease;
+      width: 100%;
+    }
+
+    .form-input:focus {
+      border-color: var(--color-secondary);
+      box-shadow: 0 0 10px var(--color-secondary-glow);
+    }
+
+    .form-select {
+      background: #0f0b20;
+      cursor: pointer;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background: linear-gradient(90deg, var(--color-primary) 0%, #a24bfa 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-speed) ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      box-shadow: 0 0 15px var(--color-primary-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      background: rgba(255,255,255,0.08);
+      color: var(--color-text-subdued);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: var(--glass-hover);
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background: rgba(255, 23, 68, 0.08);
+      border: 1px solid rgba(255, 23, 68, 0.2);
+      color: var(--color-danger);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 23, 68, 0.15);
+      box-shadow: none;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      border-radius: 8px;
+    }
+
+    /* CODE BOXES */
+    .code-block {
+      background: #07050e;
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      position: relative;
+      overflow-x: auto;
+      color: var(--color-success);
+      border-left: 3px solid var(--color-secondary);
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem; right: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--color-text-subdued);
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      color: #fff;
+      background: var(--glass-hover);
+    }
+
+    /* SWITCH SWITCHES */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .3s;
+      border-radius: 34px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .slider::before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--color-success);
+    }
+
+    input:checked + .slider::before {
+      transform: translateX(20px);
+    }
+
+    /* MODAL WINDOWS */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-container {
+      width: 90%;
+      max-width: 480px;
+      padding: 2.25rem;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+      color: #fff;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--color-text-subdued);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* DOCUMENTATION LAYOUT */
+    .guide-section {
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .guide-section h3 {
+      font-size: 1.05rem;
+      color: #fff;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 0.4rem;
+    }
+
+    .guide-section p {
+      font-size: 0.88rem;
+      color: var(--color-text-subdued);
+    }
+
+    /* CONTEXT DROPDOWNS */
+    .dropdown-trigger {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--color-text-subdued);
+      font-size: 1.1rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .dropdown-trigger:hover {
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+
+    /* MOCKUP SWITCH PREVIEWS */
+    .color-picker-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    /* SLIDE-OVER TRANSACTION DETAIL PANEL */
+    .slide-panel {
+      position: fixed;
+      top: 0; right: -420px; bottom: 0;
+      width: 420px;
+      background: rgba(14, 10, 31, 0.95);
+      backdrop-filter: blur(35px);
+      border-left: 1px solid var(--glass-border);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+      z-index: 500;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .slide-panel.active {
+      right: 0;
+    }
+
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 1rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .detail-label {
+      font-size: 0.8rem;
+      color: var(--color-text-subdued);
+    }
+
+    .detail-val {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* SIMULATOR TOOL WIDGET */
+    .sim-card {
+      border: 1px dashed var(--color-secondary);
+      background: rgba(0, 242, 254, 0.02);
+    }
+
+    .sim-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ADMIN METRICS GRID */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--color-primary);
+    }
+    .metric-icon {
+      font-size: 1.75rem;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(138,43,226,0.15);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .metric-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .metric-label {
+      font-size: 0.78rem;
+      color: var(--color-text-subdued);
+      margin-top: 0.15rem;
+    }
+
+    /* STYLED SELECT DROPDOWNS */
+    .form-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a29db8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 12px;
+      padding-right: 2rem;
+      cursor: pointer;
+    }
+    .form-select option {
+      background: #1a1528;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- DATABASE SETUP SCREEN -->
+  <!-- ========================================== -->
+  <div class="auth-overlay" id="db-setup-panel" style="display: none;">
+    <div class="auth-card">
+      <h2>Database Setup</h2>
+      <p>Configure local PostgreSQL credentials to initialize your multi-tenant UPI routing system</p>
+      
+      <form id="db-setup-form" onsubmit="handleDbSetup(event)">
+        <div class="form-group">
+          <label for="db-setup-url">PostgreSQL Connection URI</label>
+          <input type="text" id="db-setup-url" class="form-input" placeholder="postgresql://user:pass@localhost:5432/db" required>
+          <span class="stat-description">Standard connection string configuration context.</span>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;" id="db-setup-btn">
+          Connect Database
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- AUTHENTICATION (LOGIN / REGISTRATION) -->
+  <!-- ========================================== -->
+  <div class="auth-overlay" id="auth-panel" style="display: none;">
+    <div class="auth-card">
+      <h2 id="auth-title">Gateway Sign In</h2>
+      <p id="auth-sub">Enter credentials to manage your custom UPI router</p>
+      
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group">
+          <label for="auth-email">Merchant Email</label>
+          <input type="email" id="auth-email" class="form-input" placeholder="e.g. merchant@company.com" required>
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;" id="auth-btn">
+          Sign In
+        </button>
+      </form>
+      
+      <div class="auth-switch">
+        <span id="auth-switch-text">Don't have an account? </span>
+        <span class="auth-link" id="auth-toggle-link" onclick="toggleAuthMode()">Register account</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SYSTEM MAIN CONTROL CENTER -->
+  <!-- ========================================== -->
+  <div class="dashboard-wrapper" id="dashboard-container">
+    
+    <!-- LEFT NAVIGATION SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">⚡</span>
+        <div class="brand-details">
+          <h2>UPI PayRoute</h2>
+          <p>SaaS Gateway Portal</p>
+        </div>
+      </div>
+      
+      <div class="sidebar-divider"></div>
+
+      <!-- SECTION 1: CORE ROUTING -->
+      <div class="menu-section-title">Core Routing</div>
+      <nav class="sidebar-menu">
+        <button class="menu-item active" onclick="switchTab(event, 'tab-pools')">
+          💳 UPI VPAs Pool
+        </button>
+        <button class="menu-item" onclick="switchTab(event, 'tab-transactions')">
+          🗒️ Transaction Logs
+        </button>
+        <button class="menu-item" onclick="switchTab(event, 'tab-unmatched')">
+          ⚠️ Unmatched Alerts
+        </button>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- SECTION 2: INTEGRATION GUIDES -->
+      <div class="menu-section-title">Merchant Portal</div>
+      <nav class="sidebar-menu">
+        <button class="menu-item" onclick="switchTab(event, 'tab-guide')">
+          🛒 Shopify Guide
+        </button>
+        <button class="menu-item" onclick="switchTab(event, 'tab-developer-guide')">
+          💻 Developer Docs
+        </button>
+        <button class="menu-item" onclick="switchTab(event, 'tab-settings')">
+          ⚙️ Settings & API
+        </button>
+      </nav>
+
+      <!-- SECTION 3: SYSTEM ADMINISTRATION -->
+      <div id="admin-menu-section" style="display: none;">
+        <div class="sidebar-divider"></div>
+        <div class="menu-section-title">System Admin</div>
+        <nav class="sidebar-menu">
+          <button class="menu-item" onclick="switchTab(event, 'tab-admin-users')">
+            👥 Manage Users
+          </button>
+        </nav>
+      </div>
+
+      <!-- USER PROFILE FOOTER -->
+      <div class="sidebar-profile">
+        <div class="profile-avatar">👤</div>
+        <div class="profile-info">
+          <div class="profile-name" id="sidebar-merchant-email">merchant@gateway.com</div>
+          <button class="profile-action" onclick="logout()">Sign Out</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN WORKSPACE -->
+    <main class="main-content">
+      
+      <!-- CONTENT DYNAMIC HEADER -->
+      <header class="content-header">
+        <div class="page-title-section">
+          <h1 id="current-page-title">💳 UPI VPA Pool</h1>
+          <p id="current-page-desc">Manage your active payment receiver accounts and limits</p>
+        </div>
+        <div class="header-actions">
+          <div class="system-status">
+            <span class="status-dot" style="background-color: var(--color-success); width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span>
+            <span>Gateway Live</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- CENTRAL ANALYTICS CHART & OVERVIEW STATS -->
+      <div class="stats-row">
+        <div class="glass-card stat-card">
+          <h3>Today's Revenue</h3>
+          <div class="stat-value" id="stat-revenue">₹0.00</div>
+          <div class="stat-description" id="stat-approved-count">0 successful payments today</div>
+        </div>
+        <div class="glass-card stat-card">
+          <h3>Active Pools</h3>
+          <div class="stat-value" id="stat-active-vpa">0</div>
+          <div class="stat-description">Active receiver accounts</div>
+        </div>
+        <div class="glass-card stat-card">
+          <h3>Limit Headroom</h3>
+          <div class="stat-value" id="stat-headroom">₹0.00</div>
+          <div class="headroom-bar-container">
+            <div class="headroom-fill" id="headroom-fill"></div>
+          </div>
+          <div class="stat-description" id="stat-headroom-percent">Capacity: 100% remaining</div>
+        </div>
+      </div>
+
+      <!-- DYNAMIC WIDGETS SECTION (Overview chart displayed on pool/transaction tabs) -->
+      <div class="glass-card" id="analytics-chart-container" style="height: 240px; display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem;">
+        <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-subdued);">
+          📈 Transaction Value Trends (Real-time Flow)
+        </h4>
+        <div style="position: relative; flex: 1; min-height: 0;">
+          <canvas id="analytics-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 1: UPI POOLS -->
+      <!-- ========================================== -->
+      <div id="tab-pools" class="tab-content active">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1.15rem; color: #fff;">Active VPAs</h2>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-secondary btn-sm" onclick="resetVpaLimits()">
+              🔄 Reset VPA Limits
+            </button>
+            <button class="btn btn-sm" onclick="openAddModal()">
+              <span>+</span> Add UPI VPA
+            </button>
+          </div>
+        </div>
+        
+        <div class="vpa-grid" id="vpa-grid-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: UNMATCHED PAYMENTS (PAISE ASSISTANT) -->
+      <!-- ========================================== -->
+      <div id="tab-unmatched" class="tab-content">
+        <div class="glass-card">
+          <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+              ⚠️ Unmatched / Mismatched Alerts Ledger
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-top: 0.25rem;">
+              This ledger displays bank SMS credit notifications that could not be mapped automatically to checkout transactions (for instance, if a customer ignored the paise fraction and paid a flat amount). Select an alert to force manual reconciliation.
+            </p>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time Received</th>
+                  <th>Sender Info</th>
+                  <th>Amount Paid</th>
+                  <th>UTR Number</th>
+                  <th>Raw SMS Alert Text</th>
+                  <th>Status</th>
+                  <th>Manual Overrides</th>
+                </tr>
+              </thead>
+              <tbody id="unmatched-payments-tbody">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                    Loading unmatched payment alerts...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: TRANSACTION LOGS -->
+      <!-- ========================================== -->
+      <div id="tab-transactions" class="tab-content">
+        <div class="glass-card table-card">
+          
+          <div class="table-header-row">
+            <div class="search-input-group">
+              <input type="text" id="search-logs-input" class="form-input" placeholder="Search Order ID or VPA..." oninput="filterLogs()">
+              <select id="filter-logs-status" class="form-input form-select" style="max-width: 130px;" onchange="filterLogs()">
+                <option value="ALL">All Statuses</option>
+                <option value="APPROVED">Approved</option>
+                <option value="PENDING">Pending</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportTransactionsCSV()">
+              📥 Export CSV
+            </button>
+          </div>
+
+          <div class="table-container">
+            <table id="transactions-table">
+              <thead>
+                <tr>
+                  <th>Created At</th>
+                  <th>Order ID</th>
+                  <th>Base Amount</th>
+                  <th>paise Final Amount</th>
+                  <th>Assigned VPA</th>
+                  <th>Status</th>
+                  <th>UTR Reference</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-tbody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: SHOPIFY INTEGRATION GUIDE -->
+      <!-- ========================================== -->
+      <div id="tab-guide" class="tab-content">
+        <div class="glass-card">
+          
+          <div class="guide-section">
+            <h3>⚡ Multi-Tenant VPA Routing Workflow</h3>
+            <p>Your payment routing is isolated per account. Multiple store connections are verified by inspecting the store origin domain and mapping matching checkout payloads to your specific database keys.</p>
+          </div>
+
+          <div class="guide-section">
+            <h3>📱 Forwarding SMS Credit alerts</h3>
+            <p>Use an SMS forwarding application (e.g. Tasker, SMS to URL) to automate SMS verification callbacks. Match this exact endpoint format to target your specific merchant user:</p>
+            <div class="code-block" style="color: #00e676;" id="guide-webhook-url">
+              POST https://&lt;gateway-domain&gt;/api/pay/sms-webhook/&lt;user-id&gt;
+            </div>
+            <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--color-text-subdued);">
+              💡 <b>Device-Specific Routing:</b> If you use multiple phones for different UPI IDs (VPAs), you can set up phone-specific webhook paths to prevent reconciliation conflicts:
+            </p>
+            <div class="code-block" style="color: #02aab0; margin-top: 0.25rem;">
+              POST https://&lt;gateway-domain&gt;/api/pay/sms-webhook/&lt;user-id&gt;/&lt;upi-id&gt;
+            </div>
+            <p class="stat-description">Forward incoming bank credit alerts as JSON format payloads. The parser resolves decimal fractions (.01 - .99) specifically inside your tenant pool.</p>
+          </div>
+
+          <div class="guide-section">
+            <h3>🛒 Shopify extension integration snippet</h3>
+            <p>Inject this query payload inside your checkout jsx payment module to fetch dynamic payee bank strings:</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <span>fetch('https://&lt;gateway-domain&gt;/api/pay/initiate-frictionless', {<br>
+  &nbsp;&nbsp;method: 'POST',<br>
+  &nbsp;&nbsp;headers: { 'Content-Type': 'application/json' },<br>
+  &nbsp;&nbsp;body: JSON.stringify({<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;orderId: "order_10023",<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;baseAmount: 1499.00,<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;shopDomain: "merchant-store.myshopify.com"<br>
+  &nbsp;&nbsp;})<br>
+  });</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: DEVELOPER REST API DOCUMENTATION -->
+      <!-- ========================================== -->
+      <div id="tab-developer-guide" class="tab-content">
+        <!-- SIMULATOR PANEL (EASY MOCK CHECKS) -->
+        <div class="glass-card sim-card">
+          <div class="sim-title">⚡ REST API SMS Webhook Simulator</div>
+          <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+            Test transaction reconciliation workflows instantly. Type or paste a credit SMS below to simulate mobile forwarding alerts:
+          </p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+            <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+              <label for="sim-target-upi" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Target UPI ID (Optional device-specific path)</label>
+              <select id="sim-target-upi" class="form-input form-select" style="padding: 0.35rem 0.5rem; font-size: 0.75rem; height: auto;">
+                <option value="">Global Webhook (Any VPA)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+            <textarea id="sim-sms-body" class="form-input" style="font-family: monospace; font-size: 0.8rem; min-height: 70px;" placeholder="e.g. Dear Customer, your a/c is credited with INR 150.01 on 06-07-26 by UPI Ref 123456789012"></textarea>
+            <button class="btn btn-secondary" onclick="simulateSmsCallback()" style="height: 70px; min-width: 120px;">
+              Fire Alert
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="guide-section">
+            <h3>🚀 Rest API Integration</h3>
+            <p>You can programmatically initiate transactions and query status updates using your secure API key. Include your API token inside the headers of your requests.</p>
+          </div>
+
+          <div class="guide-section">
+            <h3>🔑 Authentication Headers</h3>
+            <p>We support two auth header standards. Set either of these headers to your raw <code>upi_live_...</code> API key:</p>
+            <div class="code-block" style="color: #00f2fe; padding: 0.5rem 0.75rem; border-radius: 6px; background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.85rem; border: 1px solid var(--glass-border); margin: 0.5rem 0;">
+              Authorization: Bearer YOUR_API_KEY
+            </div>
+            <div style="font-size: 0.8rem; margin: 0.5rem 0; color: var(--color-text-subdued);">Or use:</div>
+            <div class="code-block" style="color: #00f2fe; padding: 0.5rem 0.75rem; border-radius: 6px; background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.85rem; border: 1px solid var(--glass-border); margin: 0.5rem 0;">
+              X-API-Key: YOUR_API_KEY
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <h3>📡 1. Initiate Payment Transaction</h3>
+            <p>Send a POST request to initiate a new checkout routing window:</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <span>POST /api/external/pay/initiate<br>
+  Content-Type: application/json<br><br>
+  {<br>
+  &nbsp;&nbsp;"orderId": "order_1001",<br>
+  &nbsp;&nbsp;"amount": 499.00<br>
+  }</span>
+            </div>
+            
+            <h4 style="font-size: 0.95rem; margin-top: 1rem; color: #fff;">Expected JSON Response (201 Created):</h4>
+            <pre style="background: #111; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #00ca72; overflow-x: auto; border: 1px solid #222;">{
+    "success": true,
+    "orderId": "order_1001",
+    "baseAmount": 499,
+    "finalAmount": 499.03, // Unique fingerprint resolved
+    "assignedUpi": "merchant.savings@sbi",
+    "upiString": "upi://pay?pa=merchant.savings%40...",
+    "checkoutUrl": "https://gateway.com/checkout/order_1001",
+    "expiresAt": "2026-07-06T17:19:02Z",
+    "status": "PENDING"
+  }</pre>
+          </div>
+
+          <div class="guide-section">
+            <h3>📈 2. Check Payment Status</h3>
+            <p>Query the status of an order using a simple GET endpoint:</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <span>GET /api/external/pay/status/order_1001</span>
+            </div>
+
+            <h4 style="font-size: 0.95rem; margin-top: 1rem; color: #fff;">Expected JSON Response (200 OK):</h4>
+            <pre style="background: #111; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #00ca72; overflow-x: auto; border: 1px solid #222;">{
+    "success": true,
+    "orderId": "order_1001",
+    "baseAmount": 499,
+    "finalAmount": 499.03,
+    "status": "APPROVED", // APPROVED, PENDING, or CANCELLED
+    "expiresAt": "2026-07-06T17:19:02Z",
+    "utrNumber": "123456789012",
+    "createdAt": "2026-07-06T17:12:02Z"
+  }</pre>
+          </div>
+
+          <div class="guide-section">
+            <h3>⚡ 3. Receive Webhook Alerts</h3>
+            <p>Configure your webhook target URL in settings. The gateway will POST transaction status alerts as they occur:</p>
+            <h4 style="font-size: 0.95rem; margin-top: 0.5rem; color: #fff;">Captured Payment Webhook Body:</h4>
+            <pre style="background: #111; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #00ca72; overflow-x: auto; border: 1px solid #222;">{
+    "event": "payment.captured",
+    "orderId": "order_1001",
+    "baseAmount": 499,
+    "finalAmount": 499.03,
+    "assignedUpi": "merchant.savings@sbi",
+    "status": "APPROVED",
+    "utrNumber": "123456789012",
+    "timestamp": "2026-07-06T17:12:30Z"
+  }</pre>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- INTERACTIVE API PLAYGROUND SANDBOX -->
+          <!-- ========================================== -->
+          <div class="glass-card" style="margin-top: 1.5rem; border: 1px solid rgba(0, 242, 254, 0.15); background: rgba(0, 242, 254, 0.01);">
+            <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 0.75rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.4rem;">
+              💻 Interactive API Playground Sandbox
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+              Construct REST API requests, select method, type arguments, and run direct calls against the backend sandbox using your active store key.
+            </p>
+            
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+              <!-- Playground Config -->
+              <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group">
+                  <label for="play-endpoint">Select REST Resource</label>
+                  <select id="play-endpoint" class="form-input form-select" onchange="togglePlaygroundInputs()">
+                    <option value="initiate">POST /api/external/pay/initiate (Create Checkout)</option>
+                    <option value="status">GET /api/external/pay/status/:orderId (Check Status)</option>
+                  </select>
+                </div>
+                
+                <!-- Initiate specific fields -->
+                <div id="play-initiate-fields" style="display: flex; flex-direction: column; gap: 1rem;">
+                  <div class="form-group">
+                    <label for="play-order-id">Order ID</label>
+                    <input type="text" id="play-order-id" class="form-input" placeholder="e.g. order_play_9901">
+                  </div>
+                  <div class="form-group">
+                    <label for="play-amount">Amount (INR)</label>
+                    <input type="number" id="play-amount" class="form-input" placeholder="e.g. 500" value="500">
+                  </div>
+                </div>
+                
+                <!-- Status specific fields -->
+                <div id="play-status-fields" style="display: none; flex-direction: column; gap: 1rem;">
+                  <div class="form-group">
+                    <label for="play-status-order-id">Target Order ID</label>
+                    <input type="text" id="play-status-order-id" class="form-input" placeholder="e.g. order_play_9901">
+                  </div>
+                </div>
+                
+                <button class="btn" onclick="executePlaygroundApi()" style="width: 100%;">
+                  Run Sandbox Request
+                </button>
+              </div>
+              
+              <!-- Playground Console Output -->
+              <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <label>Sandbox Terminal Console Response</label>
+                <pre id="play-console" style="background: #05030a; border: 1px solid var(--glass-border); border-radius: 10px; padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a29db8; min-height: 200px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">Execute an API request to see the live console response output here...</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- WEBHOOK EVENT DELIVERY LOGS TABLE -->
+          <!-- ========================================== -->
+          <div class="glass-card" style="margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.4rem;">
+              <h3 style="font-size: 1.15rem; color: #fff;">📡 Webhook Event Delivery Logs</h3>
+              <button class="btn btn-secondary btn-sm" onclick="fetchWebhookLogs()">
+                🔄 Refresh Logs
+              </button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+              Trace the delivery response parameters, status codes, and JSON payloads of your outgoing Captured/Failed webhook alerts.
+            </p>
+            
+            <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Order ID</th>
+                    <th>Target URL</th>
+                    <th>Event</th>
+                    <th>Status</th>
+                    <th>HTTP Code</th>
+                    <th>Response Snippet</th>
+                  </tr>
+                </thead>
+                <tbody id="webhook-logs-tbody">
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                      No webhook events dispatched yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 5: BRANDING & API SETTINGS -->
+      <!-- ========================================== -->
+      <div id="tab-settings" class="tab-content">
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start; justify-content: center; max-width: 1200px; margin: 0 auto; width: 100%;">
+          
+          <!-- CONFIGURATIONS FORM (LEFT) -->
+          <div class="glass-card" style="flex: 1.2; min-width: 320px;">
+            <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+              ⚙️ Store & Branding Settings
+            </h3>
+            
+            <form id="settings-form" onsubmit="saveSettings(event)">
+              <div class="form-group">
+                <label for="settings-shopify-store">Shopify Store Domain</label>
+                <input type="text" id="settings-shopify-store" class="form-input" placeholder="e.g. store-name.myshopify.com" required>
+                <span class="stat-description">Used to match incoming extension calls to your merchant profile.</span>
+              </div>
+              <div class="form-group">
+                <label for="settings-shopify-token">Shopify Admin API Access Token</label>
+                <input type="password" id="settings-shopify-token" class="form-input" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" required>
+              </div>
+              <div class="form-group">
+                <label for="settings-gateway-url">Gateway Public URL (HTTPS Tunnel)</label>
+                <input type="text" id="settings-gateway-url" class="form-input" placeholder="e.g. https://my-gateway.ngrok-free.app">
+                <span class="stat-description">Needed to register callback webhook targets on Shopify.</span>
+              </div>
+              <div class="form-group">
+                <label for="settings-business-name">Checkout Business Name</label>
+                <input type="text" id="settings-business-name" class="form-input" placeholder="e.g. Acme Corporation" required oninput="updateLivePreview()">
+                <span class="stat-description">Custom business name displayed on the customer's UPI checkout modal.</span>
+              </div>
+              <div class="form-group">
+                <label>Checkout Brand Logo</label>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                  <!-- Thumbnail Box -->
+                  <div id="settings-logo-preview-container" style="width: 50px; height: 50px; border-radius: 8px; border: 1px dashed var(--glass-border); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); overflow: hidden;">
+                    <img id="settings-logo-preview-img" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                    <span id="settings-logo-preview-placeholder" style="font-size: 1.25rem; color: var(--color-text-subdued);">🖼️</span>
+                  </div>
+                  <div style="flex: 1;">
+                    <!-- Upload triggers -->
+                    <input type="file" id="settings-logo-upload" accept="image/*" style="display: none;" onchange="handleLogoUpload(this)">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('settings-logo-upload').click()">
+                      Upload Logo File
+                    </button>
+                    <div style="font-size: 0.7rem; color: var(--color-text-subdued); margin-top: 0.2rem;">
+                      Max size: 2MB. Or paste direct URL below:
+                    </div>
+                  </div>
+                </div>
+                <input type="text" id="settings-logo-url" class="form-input" placeholder="e.g. https://my-assets.com/logo.png" oninput="handleLogoUrlInput(this.value)">
+                <span class="stat-description">Custom logo data URI or URL displayed inside checkout.</span>
+              </div>
+              <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="flex: 1;">
+                  <label for="settings-primary-color">Primary Theme Color</label>
+                  <div class="color-picker-wrapper">
+                    <input type="color" id="settings-primary-color" value="#8a2be2" style="background:none; border:none; width:40px; height:36px; cursor:pointer;" oninput="updateLivePreview()">
+                    <input type="text" id="settings-primary-color-text" class="form-input" value="#8a2be2" style="padding: 0.4rem 0.6rem; font-size:0.85rem;" oninput="syncColorInput('settings-primary-color', this.value)">
+                  </div>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label for="settings-bg-color">Modal Background Color</label>
+                  <div class="color-picker-wrapper">
+                    <input type="color" id="settings-bg-color" value="#ffffff" style="background:none; border:none; width:40px; height:36px; cursor:pointer;" oninput="updateLivePreview()">
+                    <input type="text" id="settings-bg-color-text" class="form-input" value="#ffffff" style="padding: 0.4rem 0.6rem; font-size:0.85rem;" oninput="syncColorInput('settings-bg-color', this.value)">
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="flex: 1;">
+                  <label for="settings-timer-minutes">Checkout Expiry Timer (Minutes)</label>
+                  <input type="number" id="settings-timer-minutes" class="form-input" value="7" min="3" max="15" required oninput="updateLivePreview()">
+                  <span class="stat-description">Allowed duration before session expiry (3 to 15 mins).</span>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label for="settings-layout-theme">Checkout Theme Layout</label>
+                  <select id="settings-layout-theme" class="form-input form-select" onchange="updateLivePreview()">
+                    <option value="glassmorphism">Glassmorphism Dark</option>
+                    <option value="minimalist">Minimalist Light</option>
+                    <option value="neon">Neon Cyberpunk</option>
+                  </select>
+                  <span class="stat-description">Design layout theme applied to Hosted Checkout screens.</span>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" id="auto-integrate-btn" onclick="autoIntegrateShopify()">
+                  Auto-Integrate Shopify
+                </button>
+                <button type="submit" class="btn" id="save-settings-btn">
+                  Save Store Profile
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- DEVELOPER API INTEGRATION (LEFT OPTION B) -->
+          <div style="flex: 1.2; display: flex; flex-direction: column; gap: 2rem;">
+            <div class="glass-card">
+              <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                ⚙️ Developer API Settings
+              </h3>
+              <p style="font-size:0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+                Integrate the payment gateway manually into custom apps, websites, or billing portals.
+              </p>
+
+              <div class="form-group">
+                <label>API Authorization Key</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <input type="password" id="settings-api-key" class="form-input" style="font-family: monospace;" readonly>
+                  <button type="button" class="btn btn-secondary" onclick="toggleApiKeyReveal()" style="padding: 0.5rem; height: 38px; display: flex; align-items: center; justify-content: center;">
+                    👁️
+                  </button>
+                  <button type="button" class="btn btn-secondary" onclick="copyApiKey()" style="padding: 0.5rem; height: 38px; display: flex; align-items: center; justify-content: center;">
+                    📋
+                  </button>
+                </div>
+                <span class="stat-description">Use this token as a Bearer or X-API-Key header to authenticate requests.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="settings-webhook-url">Merchant Webhook Endpoint</label>
+                <input type="url" id="settings-webhook-url" class="form-input" placeholder="e.g. https://my-backend.com/webhook">
+                <span class="stat-description">Custom URL where the gateway will POST payment completion notifications.</span>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+                <button type="button" class="btn btn-secondary" id="rotate-key-btn" onclick="rotateApiKey()" style="flex: 1;">
+                  Rotate API Key
+                </button>
+                <button type="button" class="btn" id="save-webhook-btn" onclick="saveWebhookUrl()" style="flex: 1;">
+                  Save Webhook URL
+                </button>
+              </div>
+            </div>
+
+            <!-- SETTLEMENT BANK CREDENTIALS -->
+            <div class="glass-card">
+              <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                🏦 Settlement Bank Credentials
+              </h3>
+              <p style="font-size:0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+                Specify your commercial bank account coordinates to receive daily aggregated payouts.
+              </p>
+              <form id="settlement-form" onsubmit="saveSettlementDetails(event)">
+                <div class="form-group">
+                  <label for="settlement-bank-name">Beneficiary Bank Name</label>
+                  <input type="text" id="settlement-bank-name" class="form-input" placeholder="e.g. HDFC Bank, SBI Bank">
+                </div>
+                <div class="form-group">
+                  <label for="settlement-acc-num">Account Number</label>
+                  <input type="text" id="settlement-acc-num" class="form-input" placeholder="e.g. 50100234567890">
+                </div>
+                <div class="form-group">
+                  <label for="settlement-ifsc-code">IFSC Routing Code</label>
+                  <input type="text" id="settlement-ifsc-code" class="form-input" placeholder="e.g. HDFC0000123">
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;" id="save-settlement-btn">
+                  Save Payout Bank Coordinates
+                </button>
+              </form>
+            </div>
+
+            <!-- MOCKUP CHECKOUT PREVIEW (RIGHT) -->
+            <div class="glass-card" style="display: flex; flex-direction: column;">
+              <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                📱 Checkout Modal Live Preview
+              </h3>
+              <p style="font-size:0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+                Mockup of the payment modal that customizes in real-time according to your branding selections.
+              </p>
+              
+              <!-- Mock Mobile Extension overlay -->
+              <div id="preview-modal-bg" style="background: #ffffff; border: 1px solid #e1e1e1; border-radius: 12px; padding: 1.5rem; color: #333333; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; min-height: 480px; transition: all 0.3s ease;">
+                
+                <!-- Logo Preview -->
+                <img id="preview-logo" src="" alt="Brand Logo" style="max-height: 36px; max-width: 140px; margin-bottom: 0.5rem; display: none;">
+                
+                <!-- Business Name Header -->
+                <h4 id="preview-business-name" style="font-size: 1.15rem; font-weight: 700; color: #111; margin-bottom: 0.75rem;">P2P Payments</h4>
+                
+                <!-- Standard Warning Banner -->
+                <div style="background: #fff3cd; color: #856404; font-size: 0.7rem; border: 1px solid #ffeeba; border-radius: 6px; padding: 0.5rem; width: 100%; margin-bottom: 1rem; text-align: left;">
+                  Do not modify the payee name or payment amount. The exact paise amount is required to verify your payment.
+                </div>
+                
+                <!-- Amount breakdown -->
+                <div style="font-size: 0.8rem; color: #666; text-transform: uppercase; margin-bottom: 0.2rem;">Amount to Pay</div>
+                <div id="preview-amount" style="font-size: 1.85rem; font-weight: 800; color: #8a2be2; line-height: 1; margin-bottom: 0.2rem;">₹1200.03</div>
+                <div id="preview-breakdown" style="font-size: 0.68rem; color: #888; background: #f5f5f5; border: 1px solid #e5e5e5; padding: 0.25rem 0.5rem; border-radius: 20px; margin-bottom: 0.8rem;">
+                  Base: ₹1200.00 + Gateway fees: ₹0.03
+                </div>
+                
+                <!-- Timer details -->
+                <div id="preview-timer" style="color: #8a2be2; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.8rem;">
+                  <span>⏳</span> <span>07:00 mins remaining</span>
+                </div>
+                
+                <!-- QR Code Box -->
+                <div id="preview-qr-border" style="border: 2px solid #8a2be2; padding: 0.5rem; border-radius: 10px; background: #fff; margin-bottom: 0.5rem;">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=upi://pay" style="width: 130px; height: 130px; display: block;">
+                </div>
+                <div style="font-size: 0.72rem; color: #777; margin-bottom: 1.25rem;">Scan using any UPI app to pay</div>
+                
+                <!-- Select App section -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; width: 100%; justify-content: center;">
+                  <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 4px 6px; background: #fff; display: flex; align-items: center; justify-content: center; width: 66px; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <img src="/brand-logos/gpay.svg" alt="Google Pay" style="max-height: 18px; max-width: 50px;">
+                  </div>
+                  <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 4px 6px; background: #fff; display: flex; align-items: center; justify-content: center; width: 66px; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <img src="/brand-logos/phonepe.svg" alt="PhonePe" style="max-height: 18px; max-width: 50px;">
+                  </div>
+                  <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 4px 6px; background: #fff; display: flex; align-items: center; justify-content: center; width: 66px; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <img src="/brand-logos/paytm.svg" alt="Paytm" style="max-height: 18px; max-width: 50px;">
+                  </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 0.5rem; width: 100%; justify-content: center; margin-top: auto;">
+                  <div style="border: 1px solid #ccc; border-radius: 6px; padding: 0.4rem 1rem; font-size: 0.8rem; font-weight: 600; color: #555; background: #fafafa; pointer-events: none;">Cancel</div>
+                  <div id="preview-pay-btn" style="background: #8a2be2; color: #fff; border-radius: 6px; padding: 0.4rem 1.2rem; font-size: 0.8rem; font-weight: 600; pointer-events: none; display: flex; align-items: center;">Pay via UPI App</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- ADMIN MANAGE USERS PANEL -->
+      <!-- ========================================== -->
+      <div id="tab-admin-users" class="tab-content">
+        <!-- Admin Statistics Grid -->
+        <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+          <div class="metric-card">
+            <span class="metric-icon">👥</span>
+            <div class="metric-val" id="admin-stat-total-users">0</div>
+            <div class="metric-label">Registered Merchants</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">💳</span>
+            <div class="metric-val" id="admin-stat-total-vpas">0</div>
+            <div class="metric-label">Total VPAs Pooled</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">📊</span>
+            <div class="metric-val" id="admin-stat-total-volume">₹0</div>
+            <div class="metric-label">Aggregated System Volume</div>
+          </div>
+        </div>
+
+        <!-- Manage Table -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+            <h3 style="font-size: 1.15rem; color: #fff;">👥 Merchant Accounts Directory</h3>
+            <button class="btn btn-secondary btn-sm" onclick="openAdminAddUserModal()">
+              ➕ Add Merchant User
+            </button>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--color-text-subdued); margin-bottom: 1rem;">
+            Manage credentials, view transactional throughput, and register or delete merchant profiles in the system database.
+          </p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Merchant Email</th>
+                  <th>Shopify Domain</th>
+                  <th>Role</th>
+                  <th>Pooled VPAs</th>
+                  <th>Total Volume</th>
+                  <th>Joined Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                    Loading merchants directory...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- ADMIN ADD MERCHANT USER MODAL -->
+      <!-- ========================================== -->
+      <div class="auth-overlay" id="admin-adduser-modal" style="display: none; z-index: 10000;">
+        <div class="auth-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; font-size: 1.25rem;">Create Merchant Account</h2>
+            <button onclick="closeAdminAddUserModal()" style="background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer;">✕</button>
+          </div>
+          <form id="admin-adduser-form" onsubmit="handleAdminAddUser(event)">
+            <div class="form-group">
+              <label for="admin-new-email">Email Address</label>
+              <input type="email" id="admin-new-email" class="form-input" placeholder="e.g. seller@brand.com" required>
+            </div>
+            <div class="form-group">
+              <label for="admin-new-password">Password</label>
+              <input type="password" id="admin-new-password" class="form-input" placeholder="••••••••" required>
+            </div>
+            <div class="form-group">
+              <label for="admin-new-shopify">Shopify Store Domain (Optional)</label>
+              <input type="text" id="admin-new-shopify" class="form-input" placeholder="e.g. brand-store.myshopify.com">
+            </div>
+            <div class="form-group">
+              <label for="admin-new-role">Account Role</label>
+              <select id="admin-new-role" class="form-input form-select">
+                <option value="merchant">Merchant (Standard)</option>
+                <option value="admin">Administrator (Full Access)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">
+              Register Account
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ADD VPA MODAL OVERLAY -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="add-vpa-modal">
+    <div class="glass-card modal-container">
+      <div class="modal-header">
+        <h2>Add UPI VPA to Pool</h2>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <form id="add-vpa-form" onsubmit="handleAddVPA(event)">
+        <div class="form-group">
+          <label for="upi-id">UPI Address (VPA)</label>
+          <input type="text" id="upi-id" class="form-input" placeholder="e.g. merchant.savings@sbi" required oninput="updateSmsUrlPreview()">
+          <div id="sms-url-preview-box" style="display: none; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 0.75rem; margin-top: 0.5rem; font-size: 0.8rem;">
+            <div style="font-weight: 600; color: var(--color-secondary); margin-bottom: 0.25rem; font-size: 0.75rem;">SMS Gateway Forwarding URL for this UPI:</div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between;">
+              <code id="sms-url-preview" style="font-family: monospace; word-break: break-all; color: #fff; font-size: 0.72rem; flex: 1;"></code>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="copySmsUrlPreview()" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; white-space: nowrap;">Copy URL</button>
+            </div>
+            <div style="font-size: 0.68rem; color: var(--color-text-subdued); margin-top: 0.25rem;">
+              ℹ️ Configure your Android gateway app to forward incoming SMS messages specifically to this URL.
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="holder-name">Account Holder Name</label>
+          <input type="text" id="holder-name" class="form-input" placeholder="e.g. Vikramaditya Dev" required>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <div class="form-group" style="flex: 1;">
+            <label for="amount-limit">Daily Amount Limit (₹)</label>
+            <input type="number" id="amount-limit" class="form-input" value="100000.00" step="100" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="count-limit">Daily Txn Limit (Count)</label>
+            <input type="number" id="count-limit" class="form-input" value="20" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="vpa-weight">Routing Allocation Weight (1-100, Higher weight routes more payments)</label>
+          <input type="number" id="vpa-weight" class="form-input" value="1" min="1" max="100" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">
+          Add VPA to Pool
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- EDIT VPA LIMITS MODAL OVERLAY -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="edit-vpa-modal">
+    <div class="glass-card modal-container">
+      <div class="modal-header">
+        <h2>Edit VPA Daily Limits</h2>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="edit-vpa-form" onsubmit="handleEditVPA(event)">
+        <input type="hidden" id="edit-vpa-id">
+        <div class="form-group">
+          <label>UPI VPA Address</label>
+          <input type="text" id="edit-vpa-display" class="form-input" readonly style="background: rgba(255,255,255,0.05); color: var(--color-text-subdued);">
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <div class="form-group" style="flex: 1;">
+            <label for="edit-amount-limit">Daily Amount Limit (₹)</label>
+            <input type="number" id="edit-amount-limit" class="form-input" step="100" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="edit-count-limit">Daily Txn Limit (Count)</label>
+            <input type="number" id="edit-count-limit" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-vpa-weight">Routing Allocation Weight (1-100, Higher weight routes more payments)</label>
+          <input type="number" id="edit-vpa-weight" class="form-input" min="1" max="100" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">
+          Save Limits Configuration
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SMS GATEWAY INFORMATION MODAL OVERLAY -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="sms-gateway-info-modal">
+    <div class="glass-card modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 style="color: var(--color-secondary); display: flex; align-items: center; gap: 0.5rem;">🤖 SMS Gateway Setup</h2>
+        <button class="modal-close" onclick="closeSmsInfoModal()">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; font-family: 'Inter', sans-serif;">
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.75rem; border-radius: 8px; color: #10b981; font-size: 0.85rem; font-weight: 500;">
+          🎉 UPI VPA <b id="info-modal-upi-id"></b> has been successfully added to your pool!
+        </div>
+        
+        <p style="font-size: 0.85rem; color: var(--color-text-subdued); line-height: 1.5;">
+          Each UPI account in the routing pool requires its own SMS forwarding gateway to track incoming credits.
+        </p>
+
+        <div class="form-group">
+          <label style="font-weight: 600; color: #fff; font-size: 0.8rem;">Your Unique SMS Gateway URL:</label>
+          <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem;">
+            <code id="info-modal-webhook-url" style="font-family: monospace; word-break: break-all; color: #fff; font-size: 0.72rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--glass-border); flex: 1;"></code>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="copyInfoModalSmsUrl()" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; white-space: nowrap;">Copy URL</button>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+          <h3 style="font-size: 0.88rem; color: #fff; margin-bottom: 0.5rem;">How to configure SMS forwarding:</h3>
+          <ol style="font-size: 0.8rem; color: var(--color-text-subdued); padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; line-height: 1.4;">
+            <li>Install an <b>SMS Gateway / Forwarder</b> app on the Android phone containing the SIM card registered to the UPI ID.</li>
+            <li>Configure the app to forward incoming SMS messages.</li>
+            <li>Set the destination/target URL to the copied URL above.</li>
+            <li>Set the HTTP method to <b>POST</b>.</li>
+            <li>The message payload should be sent under field key <b>body</b> or <b>message</b> or <b>text</b>.</li>
+          </ol>
+        </div>
+
+        <button type="button" class="btn" onclick="closeSmsInfoModal()" style="width: 100%; margin-top: 1rem;">
+          Got it, proceed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SLIDE-OVER TRANSACTION DETAILS PANEL -->
+  <!-- ========================================== -->
+  <div class="slide-panel" id="detail-slide-panel">
+    <div class="slide-header">
+      <h2 style="font-size: 1.15rem; color: #fff;">Transaction Details</h2>
+      <button class="modal-close" onclick="closeDetailsSlide()">&times;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+      <div class="detail-row">
+        <span class="detail-label">Order ID</span>
+        <span class="detail-val" id="det-order-id">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="detail-val" id="det-status">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Base Amount</span>
+        <span class="detail-val" id="det-base-amount">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">paise Final Amount</span>
+        <span class="detail-val" id="det-final-amount">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Assigned UPI ID</span>
+        <span class="detail-val" id="det-vpa">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">UTR Number</span>
+        <span class="detail-val" id="det-utr">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Created At</span>
+        <span class="detail-val" id="det-created-at">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Lifespan Expires At</span>
+        <span class="detail-val" id="det-expires-at">-</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-divider" style="margin-top: 1rem;"></div>
+    
+    <!-- Quick Simulation Tool -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <h4 style="font-size: 0.8rem; font-weight: 700; color: #fff;">Quick Reconciliation Check</h4>
+      <p style="font-size: 0.75rem; color: var(--color-text-subdued);">
+        Simulate an incoming SMS bank credit matching this transaction's exact amount:
+      </p>
+      <button class="btn btn-secondary btn-sm" onclick="populateAndFireSim()">
+        🚀 Mock Bank SMS Match
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN CLIENT LOGIC AND API BINDINGS -->
+  <!-- ========================================== -->
+  <script>
+    let currentUser = null;
+    let localVPAs = [];
+    let localLogs = [];
+    let isRegisterMode = false;
+    let isKeyRevealed = false;
+
+    // XSS-safe HTML escaper
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Toast notification system (replaces alert())
+    function showToast(message, type = 'info', duration = 4000) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:1.5rem;right:1.5rem;z-index:100000;display:flex;flex-direction:column;gap:0.5rem;max-width:420px;';
+        document.body.appendChild(container);
+      }
+
+      const colors = {
+        success: { bg: 'rgba(16,185,129,0.95)', icon: '✅' },
+        error:   { bg: 'rgba(239,68,68,0.95)',  icon: '❌' },
+        warning: { bg: 'rgba(245,158,11,0.95)', icon: '⚠️' },
+        info:    { bg: 'rgba(99,102,241,0.95)',  icon: 'ℹ️' }
+      };
+      const c = colors[type] || colors.info;
+
+      const toast = document.createElement('div');
+      toast.style.cssText = `background:${c.bg};color:#fff;padding:0.75rem 1rem;border-radius:10px;font-size:0.85rem;font-family:'Inter',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(12px);display:flex;align-items:center;gap:0.5rem;animation:toastSlideIn 0.3s ease;cursor:pointer;`;
+      toast.innerHTML = `<span>${c.icon}</span><span>${escapeHtml(message)}</span>`;
+      toast.onclick = () => toast.remove();
+      container.appendChild(toast);
+
+      // Add animation keyframes if not present
+      if (!document.getElementById('toast-keyframes')) {
+        const style = document.createElement('style');
+        style.id = 'toast-keyframes';
+        style.textContent = `@keyframes toastSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes toastSlideOut{from{opacity:1}to{transform:translateX(100%);opacity:0}}`;
+        document.head.appendChild(style);
+      }
+
+      setTimeout(() => {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // Helper utility to handle authorized API calls
+    async function apiRequest(url, options = {}) {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(url, {
+        ...options,
+        headers
+      });
+
+      if (res.status === 401 && token) {
+        logout();
+        throw new Error('Session expired. Please log in again.');
+      }
+      return res;
+    }
+
+    // Toggle between Login and Signup modes
+    function toggleAuthMode() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').textContent = isRegisterMode ? 'Create SaaS Account' : 'Gateway Sign In';
+      document.getElementById('auth-sub').textContent = isRegisterMode ? 'Register to start routing your UPI payments' : 'Enter credentials to manage your custom UPI router';
+      document.getElementById('auth-btn').textContent = isRegisterMode ? 'Create Account' : 'Sign In';
+      document.getElementById('auth-switch-text').textContent = isRegisterMode ? 'Already have an account? ' : "Don't have an account? ";
+      document.getElementById('auth-toggle-link').textContent = isRegisterMode ? 'Sign In' : 'Register account';
+      document.getElementById('auth-form').reset();
+    }
+
+    // Handle Authentication Submit
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const url = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Authentication failed.');
+
+        localStorage.setItem('token', data.token);
+        document.getElementById('auth-panel').style.display = 'none';
+        document.getElementById('dashboard-container').style.display = 'grid';
+        
+        await initializeDashboard();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Boot routines
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        
+        if (config.databaseStatus === 'DISCONNECTED') {
+          document.getElementById('db-setup-panel').style.display = 'flex';
+          document.getElementById('auth-panel').style.display = 'none';
+          document.getElementById('dashboard-container').style.display = 'none';
+          return;
+        }
+        
+        document.getElementById('db-setup-panel').style.display = 'none';
+        
+        const token = localStorage.getItem('token');
+        if (token) {
+          document.getElementById('auth-panel').style.display = 'none';
+          document.getElementById('dashboard-container').style.display = 'grid';
+          await initializeDashboard();
+        } else {
+          document.getElementById('auth-panel').style.display = 'flex';
+          document.getElementById('dashboard-container').style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Boot checks failed:', err);
+      }
+    });
+
+    // Handle Database Setup Wizard Submit
+    async function handleDbSetup(e) {
+      e.preventDefault();
+      const dbSetupBtn = document.getElementById('db-setup-btn');
+      const originalText = dbSetupBtn.textContent;
+      dbSetupBtn.textContent = 'Connecting...';
+      dbSetupBtn.disabled = true;
+
+      const dbUrl = document.getElementById('db-setup-url').value.trim();
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dbUrl })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Connection failed.');
+        }
+
+        alert('Database connection verified successfully! Seeding parameters...');
+        window.location.reload();
+      } catch (err) {
+        alert('Database Error: ' + err.message);
+      } finally {
+        dbSetupBtn.textContent = originalText;
+        dbSetupBtn.disabled = false;
+      }
+    }
+
+    // Initialize Dashboard components
+    async function initializeDashboard() {
+      try {
+        await loadUserProfile();
+        await fetchStats();
+        await fetchVPAPool();
+        await fetchLogs();
+        await fetchSettings();
+        await fetchWebhookLogs();
+        
+        // Auto-refresh loops (every 10s)
+        setInterval(() => {
+          if (!localStorage.getItem('token')) return;
+          fetchStats();
+          if (document.getElementById('tab-pools').classList.contains('active')) fetchVPAPool();
+          fetchLogs();
+          if (document.getElementById('tab-settings').classList.contains('active')) fetchSettings();
+          if (document.getElementById('tab-developer-guide').classList.contains('active')) fetchWebhookLogs();
+        }, 10000);
+      } catch (err) {
+        console.warn('Init dashboard failed:', err.message);
+      }
+    }
+
+    async function loadUserProfile() {
+      try {
+        const res = await apiRequest('/api/auth/me');
+        if (!res.ok) throw new Error();
+        currentUser = await res.json();
+        
+        document.getElementById('sidebar-merchant-email').textContent = currentUser.email;
+
+        // Toggle admin panel view
+        const adminSection = document.getElementById('admin-menu-section');
+        if (currentUser.role === 'admin') {
+          adminSection.style.display = 'block';
+        } else {
+          adminSection.style.display = 'none';
+        }
+
+        // Update User-specific webhook texts in Guide tab
+        const origin = window.location.origin;
+        document.getElementById('guide-webhook-url').textContent = `POST ${origin}/api/pay/sms-webhook/${currentUser.id}`;
+      } catch (e) {
+        logout();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      currentUser = null;
+      document.getElementById('auth-panel').style.display = 'flex';
+      document.getElementById('dashboard-container').style.display = 'none';
+      document.getElementById('auth-form').reset();
+    }
+
+    // Tab Navigation Switcher
+    function switchTab(e, tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      document.querySelectorAll('.tab-btn, .menu-item').forEach(btn => btn.classList.remove('active'));
+      
+      if (e) {
+        e.currentTarget.classList.add('active');
+      }
+
+      // Hide or show chart based on tab selection (chart only on overview metrics tabs)
+      const chartContainer = document.getElementById('analytics-chart-container');
+      if (tabId === 'tab-pools' || tabId === 'tab-transactions') {
+        chartContainer.style.display = 'flex';
+      } else {
+        chartContainer.style.display = 'none';
+      }
+
+      // Update titles dynamically
+      const pageTitles = {
+        'tab-pools': { title: '💳 UPI VPA Pool', desc: 'Manage your active payment receiver accounts and limits' },
+        'tab-transactions': { title: '🗒️ Transaction Logs', desc: 'Search, filter, and track payments in real time' },
+        'tab-guide': { title: '🛒 Shopify Integration Guide', desc: 'Step-by-step instructions to embed UPI routing on Shopify' },
+        'tab-developer-guide': { title: '💻 Developer REST API Docs', desc: 'Integrate the payment gateway manually into custom applications' },
+        'tab-settings': { title: '⚙️ Settings & API Config', desc: 'Configure store branding, webhook targets, and API authorization tokens' },
+        'tab-admin-users': { title: '👥 System Admin Panel', desc: 'Oversee registered merchants, reset credentials, and audit transactional volumes' },
+        'tab-unmatched': { title: '⚠️ Unmatched Alerts Ledger', desc: 'Manually resolve, bind, or dismiss payments that failed automatic paise matching checks' }
+      };
+
+      if (pageTitles[tabId]) {
+        document.getElementById('current-page-title').textContent = pageTitles[tabId].title;
+        document.getElementById('current-page-desc').textContent = pageTitles[tabId].desc;
+      }
+
+      if (tabId === 'tab-developer-guide') {
+        fetchWebhookLogs();
+      }
+
+      if (tabId === 'tab-admin-users') {
+        fetchAdminUsers();
+      }
+
+      if (tabId === 'tab-unmatched') {
+        fetchUnmatchedPayments();
+      }
+    }
+
+    // Stats Loader
+    async function fetchStats() {
+      try {
+        const res = await apiRequest('/api/pool/stats');
+        const stats = await res.json();
+        
+        document.getElementById('stat-revenue').textContent = `₹${stats.revenueToday.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        document.getElementById('stat-approved-count').textContent = `${stats.approvedTransactionsToday} successful payment${stats.approvedTransactionsToday === 1 ? '' : 's'} today`;
+        document.getElementById('stat-active-vpa').textContent = stats.activeVpaCount;
+        
+        const headroomVal = stats.headroomRemaining;
+        document.getElementById('stat-headroom').textContent = `₹${headroomVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        
+        let percent = 100;
+        if (stats.totalLimit > 0) {
+          percent = Math.max(0, Math.round((headroomVal / stats.totalLimit) * 100));
+        }
+        
+        document.getElementById('stat-headroom-percent').textContent = `Capacity: ${percent}% headroom remaining`;
+        document.getElementById('headroom-fill').style.width = `${percent}%`;
+        
+      } catch (err) {
+        console.error('Failed to load metrics:', err.message);
+      }
+    }
+
+    // UPI Pools List Loader
+    async function fetchVPAPool() {
+      try {
+        const res = await apiRequest('/api/pool');
+        localVPAs = await res.json();
+        renderVPAs();
+      } catch (err) {
+        console.error('Failed to load VPAs:', err.message);
+      }
+    }
+
+    // Render UPI VPA Cards with dynamic layouts
+    function renderVPAs() {
+      const container = document.getElementById('vpa-grid-container');
+      container.innerHTML = '';
+
+      // Populate simulator target UPI dropdown
+      const simSelect = document.getElementById('sim-target-upi');
+      if (simSelect) {
+        simSelect.innerHTML = '<option value="">Global Webhook (Any VPA)</option>';
+        localVPAs.forEach(vpa => {
+          const opt = document.createElement('option');
+          opt.value = vpa.upi_id;
+          opt.textContent = vpa.upi_id;
+          simSelect.appendChild(opt);
+        });
+      }
+
+      if (localVPAs.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+            <p style="color: var(--color-text-subdued);">No UPI accounts registered yet. Click "+ Add UPI VPA" to get started.</p>
+          </div>
+        `;
+        return;
+      }
+
+      localVPAs.forEach(vpa => {
+        const currentAmt = parseFloat(vpa.current_amount);
+        const limitAmt = parseFloat(vpa.daily_amount_limit);
+        const remaining = Math.max(0, limitAmt - currentAmt);
+        
+        let progressPercent = 0;
+        if (limitAmt > 0) {
+          progressPercent = Math.min(100, Math.round((currentAmt / limitAmt) * 100));
+        }
+
+        const activeChecked = vpa.is_active ? 'checked' : '';
+        
+        let cooldownBadge = '';
+        if (vpa.cooldown_until && new Date(vpa.cooldown_until) > new Date()) {
+          const remSecs = Math.round((new Date(vpa.cooldown_until) - new Date()) / 1000);
+          const mins = Math.ceil(remSecs / 60);
+          cooldownBadge = `<span class="status-badge" style="font-size: 0.65rem; background: #ff3b30; color: #fff; margin-left: 0.5rem; text-transform: uppercase; padding: 0.1rem 0.35rem; border-radius: 4px;">❄️ Cooldown ${mins}m</span>`;
+        }
+        
+        const card = document.createElement('div');
+        card.className = 'bank-card';
+        const safeUpiId = escapeHtml(vpa.upi_id);
+        const safeHolder = escapeHtml(vpa.account_holder);
+        card.innerHTML = `
+          <div class="bank-card-header">
+            <span class="bank-badge" style="display:flex; align-items:center; gap:0.5rem;">
+              Receiver Account ${cooldownBadge}
+              <span class="status-badge ${vpa.is_active ? 'status-approved' : 'status-cancelled'}" style="font-size: 0.62rem; padding: 0.1rem 0.35rem; border-radius: 4px; line-height: 1.2;">
+                ${vpa.is_active ? 'ACTIVE' : 'INACTIVE'}
+              </span>
+            </span>
+            <label class="switch card-switch">
+              <input type="checkbox" ${activeChecked} data-upi="${safeUpiId}" onchange="toggleVpaStatus(this.dataset.upi, this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div>
+            <div class="bank-vpa">${safeUpiId}</div>
+            <div class="bank-holder">${safeHolder}</div>
+          </div>
+          
+          <div class="card-limit-stats">
+            <div class="limit-labels">
+              <span>Today: ₹${currentAmt.toFixed(0)} / ₹${limitAmt.toFixed(0)}</span>
+              <span>${progressPercent}% Used</span>
+            </div>
+            <div class="limit-progress-bar">
+              <div class="limit-progress-fill" style="width: ${progressPercent}%; background-color: ${progressPercent > 80 ? 'var(--color-danger)' : 'var(--color-secondary)'};"></div>
+            </div>
+            
+            <div style="font-size: 0.72rem; color: var(--color-text-subdued); margin: 0.5rem 0 0.75rem 0; font-family: 'JetBrains Mono', monospace;">
+              ⚖️ Routing weight: <b>${parseInt(vpa.weight) || 1}x</b>
+            </div>
+
+            <div class="card-actions-row">
+              <button class="btn btn-secondary btn-sm" data-upi="${safeUpiId}" data-limit="${limitAmt}" data-count="${vpa.daily_count_limit}" data-weight="${vpa.weight}" onclick="openEditModal(this.dataset.upi, parseFloat(this.dataset.limit), parseInt(this.dataset.count), parseInt(this.dataset.weight))">
+                Limits &amp; Weight
+              </button>
+              <button class="btn btn-secondary btn-sm" data-upi="${safeUpiId}" onclick="copySmsHookUrl(this.dataset.upi)" title="Copy SMS Webhook URL specifically for this VPA">
+                🔗 Copy Hook
+              </button>
+              <button class="btn btn-danger btn-sm" data-upi="${safeUpiId}" onclick="deleteVPA(this.dataset.upi)">
+                Delete
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Toggle active state of VPA
+    async function toggleVpaStatus(upiId, isChecked) {
+      try {
+        const res = await apiRequest(`/api/pool/${encodeURIComponent(upiId)}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_active: isChecked })
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to toggle status.');
+        }
+
+        fetchStats();
+        fetchVPAPool();
+      } catch (err) {
+        alert(err.message);
+        fetchVPAPool();
+      }
+    }
+
+    // Add VPA submit handler
+    async function handleAddVPA(e) {
+      e.preventDefault();
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      
+      const upiId = document.getElementById('upi-id').value.trim();
+      const accountHolder = document.getElementById('holder-name').value.trim();
+      const dailyAmountLimit = parseFloat(document.getElementById('amount-limit').value);
+      const dailyCountLimit = parseInt(document.getElementById('count-limit').value);
+      const weight = parseInt(document.getElementById('vpa-weight').value) || 1;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Adding UPI VPA...';
+      }
+
+      try {
+        const res = await apiRequest('/api/pool', {
+          method: 'POST',
+          body: JSON.stringify({ upiId, accountHolder, dailyAmountLimit, dailyCountLimit, weight })
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to add VPA');
+        }
+
+        // Hide preview box
+        const previewBox = document.getElementById('sms-url-preview-box');
+        if (previewBox) previewBox.style.display = 'none';
+
+        closeAddModal();
+        showToast('UPI VPA account added to pool!', 'success');
+        
+        // Open the setup setup info modal (Direct user instruction)
+        openSmsInfoModal(upiId);
+        
+        fetchStats();
+        fetchVPAPool();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add VPA to Pool';
+        }
+      }
+    }
+
+    // Edit Limits submit handler
+    async function handleEditVPA(e) {
+      e.preventDefault();
+      const upiId = document.getElementById('edit-vpa-id').value;
+      const dailyAmountLimit = parseFloat(document.getElementById('edit-amount-limit').value);
+      const dailyCountLimit = parseInt(document.getElementById('edit-count-limit').value);
+      const weight = parseInt(document.getElementById('edit-vpa-weight').value) || 1;
+
+      try {
+        const res = await apiRequest(`/api/pool/${encodeURIComponent(upiId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ dailyAmountLimit, dailyCountLimit, weight })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update VPA limits');
+        }
+
+        closeEditModal();
+        fetchStats();
+        fetchVPAPool();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // Copy device-specific VPA SMS Hook URL
+    function copySmsHookUrl(upiId) {
+      if (!currentUser) return;
+      const hookUrl = getSmsWebhookUrl(upiId);
+
+      navigator.clipboard.writeText(hookUrl)
+        .then(() => showToast(`SMS Webhook URL copied for ${upiId}!`, 'success'))
+        .catch(() => {
+          const tempInput = document.createElement('input');
+          tempInput.value = hookUrl;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+          showToast(`SMS Webhook URL copied for ${upiId}!`, 'success');
+        });
+    }
+
+    // Dynamic preview functions for Add VPA Modal
+    function updateSmsUrlPreview() {
+      const upiId = document.getElementById('upi-id').value.trim();
+      const previewBox = document.getElementById('sms-url-preview-box');
+      const previewText = document.getElementById('sms-url-preview');
+      
+      if (!upiId || !currentUser) {
+        previewBox.style.display = 'none';
+        return;
+      }
+      
+      previewText.textContent = getSmsWebhookUrl(upiId);
+      previewBox.style.display = 'block';
+    }
+
+    function copySmsUrlPreview() {
+      const previewText = document.getElementById('sms-url-preview').textContent;
+      if (!previewText) return;
+      navigator.clipboard.writeText(previewText)
+        .then(() => {
+          showToast('SMS Gateway URL copied to clipboard!', 'success');
+        })
+        .catch(() => {
+          const tempInput = document.createElement('input');
+          tempInput.value = previewText;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+          showToast('SMS Gateway URL copied to clipboard!', 'success');
+        });
+    }
+
+    function getMerchantApiKey() {
+      const el = document.getElementById('settings-api-key');
+      return el ? el.value : '';
+    }
+
+    function getSmsWebhookUrl(upiId) {
+      if (!currentUser) return '';
+      const origin = window.location.origin;
+      const apiKey = getMerchantApiKey();
+      const encodedUpi = encodeURIComponent(upiId);
+      if (apiKey) {
+        return `${origin}/api/pay/sms-webhook/${currentUser.id}/${encodedUpi}?token=${encodeURIComponent(apiKey)}`;
+      } else {
+        return `${origin}/api/pay/sms-webhook/${currentUser.id}/${encodedUpi}`;
+      }
+    }
+
+    function openSmsInfoModal(upiId) {
+      document.getElementById('info-modal-upi-id').textContent = upiId;
+      document.getElementById('info-modal-webhook-url').textContent = getSmsWebhookUrl(upiId);
+      
+      const modal = document.getElementById('sms-gateway-info-modal');
+      modal.style.display = 'flex';
+      setTimeout(() => modal.style.opacity = '1', 10);
+    }
+
+    function closeSmsInfoModal() {
+      const modal = document.getElementById('sms-gateway-info-modal');
+      modal.style.opacity = '0';
+      setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    function copyInfoModalSmsUrl() {
+      const urlText = document.getElementById('info-modal-webhook-url').textContent;
+      if (!urlText) return;
+      navigator.clipboard.writeText(urlText)
+        .then(() => showToast('SMS Gateway URL copied to clipboard!', 'success'))
+        .catch(() => {
+          const tempInput = document.createElement('input');
+          tempInput.value = urlText;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+          showToast('SMS Gateway URL copied to clipboard!', 'success');
+        });
+    }
+
+    // Delete VPA
+    async function deleteVPA(upiId) {
+      if (!confirm(`Are you sure you want to remove VPA "${upiId}" from the gateway pool?`)) return;
+
+      try {
+        const res = await apiRequest(`/api/pool/${encodeURIComponent(upiId)}`, {
+          method: 'DELETE'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to delete VPA.');
+        }
+
+        fetchStats();
+        fetchVPAPool();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Toggle Inputs in Sandbox Playground
+    function togglePlaygroundInputs() {
+      const endpoint = document.getElementById('play-endpoint').value;
+      if (endpoint === 'initiate') {
+        document.getElementById('play-initiate-fields').style.display = 'flex';
+        document.getElementById('play-status-fields').style.display = 'none';
+      } else {
+        document.getElementById('play-initiate-fields').style.display = 'none';
+        document.getElementById('play-status-fields').style.display = 'flex';
+      }
+    }
+
+    // Execute Sandbox REST API call
+    async function executePlaygroundApi() {
+      const consolePre = document.getElementById('play-console');
+      const endpoint = document.getElementById('play-endpoint').value;
+      const apiKeyInput = document.getElementById('settings-api-key').value;
+
+      if (!apiKeyInput) {
+        alert('Please fetch your API configurations token key first.');
+        return;
+      }
+
+      consolePre.textContent = 'Sending request to sandbox gateway...';
+
+      try {
+        let url = '';
+        let options = {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKeyInput}`,
+            'Content-Type': 'application/json'
+          }
+        };
+
+        if (endpoint === 'initiate') {
+          url = '/api/external/pay/initiate';
+          const orderId = document.getElementById('play-order-id').value.trim() || `order_play_${Date.now()}`;
+          const amount = parseFloat(document.getElementById('play-amount').value) || 500.00;
+          
+          options.method = 'POST';
+          options.body = JSON.stringify({ orderId, amount });
+        } else {
+          const orderId = document.getElementById('play-status-order-id').value.trim();
+          if (!orderId) {
+            alert('Target Order ID parameter is required.');
+            consolePre.textContent = 'Failed: Target Order ID is missing.';
+            return;
+          }
+          url = `/api/external/pay/status/${encodeURIComponent(orderId)}`;
+        }
+
+        const start = performance.now();
+        const res = await fetch(url, options);
+        const latency = (performance.now() - start).toFixed(0);
+        const text = await res.text();
+
+        let parsedJson = '';
+        try {
+          parsedJson = JSON.stringify(JSON.parse(text), null, 2);
+        } catch (e) {
+          parsedJson = text;
+        }
+
+        consolePre.innerHTML = `<span style="color: var(--color-secondary);">HTTP Status: ${res.status} ${res.statusText}</span>\n<span style="color: var(--color-text-subdued);">Response Latency: ${latency}ms</span>\n\n${parsedJson}`;
+        
+        if (endpoint === 'initiate') {
+          await fetchLogs();
+        }
+      } catch (err) {
+        consolePre.textContent = `API Request Error: ${err.message}`;
+      }
+    }
+
+    // Fetch Webhook delivery history logs
+    async function fetchWebhookLogs() {
+      const tbody = document.getElementById('webhook-logs-tbody');
+      try {
+        const res = await apiRequest('/api/pool/webhook-logs');
+        if (!res.ok) throw new Error();
+        const logs = await res.json();
+        
+        tbody.innerHTML = '';
+        if (logs.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                No webhook events dispatched yet.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        logs.forEach(log => {
+          const dateObj = new Date(log.created_at);
+          const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const badgeClass = log.success ? 'status-approved' : 'status-cancelled';
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${timeStr}</td>
+            <td><b>#${escapeHtml(log.order_id)}</b></td>
+            <td><code style="font-size:0.75rem; word-break:break-all;">${escapeHtml(log.url)}</code></td>
+            <td><code>${escapeHtml(log.event_type)}</code></td>
+            <td><span class="status-badge ${badgeClass}">${log.success ? 'DELIVERED' : 'FAILED'}</span></td>
+            <td><code>${escapeHtml(log.response_code || 'CONN_ERR')}</code></td>
+            <td><span style="font-size: 0.78rem; font-family: monospace; opacity: 0.8;" title="${escapeHtml(log.response_body || '')}">${escapeHtml((log.response_body || '').substring(0, 30)) || 'None'}</span></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Failed to load webhook logs:', err.message);
+      }
+    }
+
+    // Reset accumulated VPA Daily Limits to 0
+    async function resetVpaLimits() {
+      if (!confirm('Are you sure you want to manually reset the daily limit statistics for ALL VPA accounts in your pool to zero?')) {
+        return;
+      }
+
+      try {
+        const res = await apiRequest('/api/pool/reset-limits', { method: 'POST' });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to reset daily limits.');
+        }
+
+        alert('VPA Pool usage limits manually reset successfully!');
+        await fetchStats();
+        await fetchVPAPool();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // Export Transaction Logs as CSV file
+    function exportTransactionsCSV() {
+      if (localLogs.length === 0) {
+        alert('No transactions recorded to export.');
+        return;
+      }
+
+      let csvContent = 'data:text/csv;charset=utf-8,';
+      csvContent += 'Timestamp,Order ID,Base Amount,Final Amount,Assigned VPA,Status,UTR Reference,Expires At\n';
+
+      localLogs.forEach(log => {
+        const row = [
+          new Date(log.created_at).toISOString(),
+          `#${log.order_id}`,
+          log.base_amount,
+          log.final_amount,
+          log.assigned_upi,
+          log.status,
+          log.utr_number || 'AWAITING',
+          new Date(log.expires_at).toISOString()
+        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+        
+        csvContent += row + '\n';
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `upi_transactions_export_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // SYSTEM ADMIN ACTIONS
+    // ==========================================
+    let localAdminUsers = [];
+
+    async function fetchAdminUsers() {
+      const tbody = document.getElementById('admin-users-tbody');
+      try {
+        const res = await apiRequest('/api/admin/users');
+        if (!res.ok) throw new Error('Unauthorized or failed to load users.');
+        localAdminUsers = await res.json();
+        
+        // Update stats counters
+        document.getElementById('admin-stat-total-users').textContent = localAdminUsers.length;
+        
+        let totalVpas = 0;
+        let totalVolume = 0.00;
+        localAdminUsers.forEach(u => {
+          totalVpas += parseInt(u.total_vpas || 0);
+          totalVolume += parseFloat(u.total_volume || 0);
+        });
+        
+        document.getElementById('admin-stat-total-vpas').textContent = totalVpas;
+        document.getElementById('admin-stat-total-volume').textContent = `₹${totalVolume.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+
+        tbody.innerHTML = '';
+        if (localAdminUsers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                No users found.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        localAdminUsers.forEach(user => {
+          const dateStr = new Date(user.created_at).toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
+          const roleClass = user.role === 'admin' ? 'status-approved' : 'status-pending';
+          const vol = parseFloat(user.total_volume || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><code>#${user.id}</code></td>
+            <td><b>${escapeHtml(user.email)}</b></td>
+            <td><code>${escapeHtml(user.shopify_store || 'Manual API')}</code></td>
+            <td><span class="status-badge ${roleClass}">${escapeHtml(user.role).toUpperCase()}</span></td>
+            <td><code>${user.total_vpas} VPAs</code></td>
+            <td><b>₹${vol}</b></td>
+            <td>${dateStr}</td>
+            <td>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary btn-sm" onclick="adminResetUserPassword(${parseInt(user.id)})" style="padding: 0.25rem 0.5rem; font-size: 0.72rem;">
+                  🔑 Reset Pass
+                </button>
+                <button class="btn btn-danger btn-sm" data-uid="${parseInt(user.id)}" data-email="${escapeHtml(user.email)}" onclick="adminDeleteUser(parseInt(this.dataset.uid), this.dataset.email)" style="padding: 0.25rem 0.5rem; font-size: 0.72rem;">
+                  Delete
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem; color: var(--color-danger);">
+              Error: ${escapeHtml(err.message)}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function openAdminAddUserModal() {
+      document.getElementById('admin-adduser-modal').style.display = 'flex';
+      document.getElementById('admin-adduser-form').reset();
+    }
+
+    function closeAdminAddUserModal() {
+      document.getElementById('admin-adduser-modal').style.display = 'none';
+    }
+
+    async function handleAdminAddUser(e) {
+      e.preventDefault();
+      const email = document.getElementById('admin-new-email').value.trim();
+      const password = document.getElementById('admin-new-password').value;
+      const shopify_store = document.getElementById('admin-new-shopify').value.trim();
+      const role = document.getElementById('admin-new-role').value;
+
+      try {
+        const res = await apiRequest('/api/admin/users', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, shopify_store, role })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to create user.');
+        }
+
+        alert('New merchant account registered successfully!');
+        closeAdminAddUserModal();
+        fetchAdminUsers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function adminResetUserPassword(userId) {
+      const newPassword = prompt('Enter new password for this account (min 6 characters):');
+      if (newPassword === null) return; // Cancelled
+      
+      if (newPassword.trim().length < 6) {
+        alert('Password must be at least 6 characters long.');
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/admin/users/${userId}/change-password`, {
+          method: 'POST',
+          body: JSON.stringify({ newPassword })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update password.');
+        }
+
+        alert('User password updated successfully!');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function adminDeleteUser(userId, email) {
+      if (userId === currentUser.id) {
+        alert('You cannot delete your own active administrator account!');
+        return;
+      }
+
+      if (!confirm(`WARNING: Are you sure you want to permanently delete user account "${email}"? All associated VPA pools, transaction logs, and key credentials will be deleted immediately from the database!`)) {
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/admin/users/${userId}`, {
+          method: 'DELETE'
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to delete user.');
+        }
+
+        alert('Merchant user profile deleted successfully!');
+        fetchAdminUsers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // ==========================================
+    // UNMATCHED PAYMENTS LEDGER ACTIONS
+    // ==========================================
+    let localUnmatched = [];
+
+    async function fetchUnmatchedPayments() {
+      const tbody = document.getElementById('unmatched-payments-tbody');
+      try {
+        const res = await apiRequest('/api/pool/unmatched-payments');
+        if (!res.ok) throw new Error('Failed to load unmatched alerts.');
+        localUnmatched = await res.json();
+        
+        tbody.innerHTML = '';
+        if (localUnmatched.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+                No unmatched payment alerts registered. Everything resolved!
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        localUnmatched.forEach(item => {
+          const dateStr = new Date(item.created_at).toLocaleString();
+          const isResolved = item.resolved;
+          
+          let statusBadge = '';
+          let actionBtns = '';
+          
+          if (isResolved) {
+            statusBadge = `<span class="status-badge status-approved">RESOLVED (${item.resolved_order_id})</span>`;
+            actionBtns = `<span style="font-size: 0.8rem; color: var(--color-text-subdued);">Reconciled</span>`;
+          } else {
+            statusBadge = `<span class="status-badge status-pending">UNRESOLVED</span>`;
+            actionBtns = `
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-sm" onclick="manualMatchAlertToOrder(${item.id}, ${item.amount})" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
+                  🔑 Match to Order
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="dismissUnmatchedAlert(${item.id})" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
+                  Dismiss
+                </button>
+              </div>
+            `;
+          }
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><code>${dateStr}</code></td>
+            <td><b>${escapeHtml(item.sender || 'UNKNOWN')}</b></td>
+            <td><b>₹${parseFloat(item.amount).toFixed(2)}</b></td>
+            <td><code>${escapeHtml(item.utr_number)}</code></td>
+            <td><div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem;" title="${escapeHtml(item.message)}">${escapeHtml(item.message)}</div></td>
+            <td>${statusBadge}</td>
+            <td>${actionBtns}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-danger);">
+              Error: ${escapeHtml(err.message)}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    async function manualMatchAlertToOrder(alertId, rawAmount) {
+      const orderId = prompt(`Enter PENDING Shopify or Developer Order ID to map with this credit payment of ₹${parseFloat(rawAmount).toFixed(2)}:`);
+      if (!orderId) return;
+
+      try {
+        const res = await apiRequest(`/api/pool/unmatched-payments/${alertId}/reconcile`, {
+          method: 'POST',
+          body: JSON.stringify({ orderId: orderId.trim() })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to manually match payment.');
+        }
+
+        alert('Payment manually reconciled and order status updated successfully!');
+        fetchUnmatchedPayments();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function dismissUnmatchedAlert(alertId) {
+      if (!confirm('Are you sure you want to dismiss this unmatched payment alert? It will be marked resolved and ignored.')) {
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/pool/unmatched-payments/${alertId}/resolve`, {
+          method: 'POST'
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to dismiss alert.');
+        }
+
+        alert('Alert dismissed successfully.');
+        fetchUnmatchedPayments();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Transaction Logs Loader
+    async function fetchLogs() {
+      try {
+        const res = await apiRequest('/api/pool/transactions');
+        localLogs = await res.json();
+        renderLogs(localLogs);
+        
+        // Update Chart statistics dynamically
+        updateDashboardChart(localLogs);
+      } catch (err) {
+        console.error('Failed to load transaction logs:', err.message);
+      }
+    }
+
+    // Render Transaction Logs
+    function renderLogs(logs) {
+      const tbody = document.getElementById('transactions-tbody');
+      tbody.innerHTML = '';
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem; color: var(--color-text-subdued);">
+              No transactions recorded in system yet.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      logs.forEach(log => {
+        const dateObj = new Date(log.created_at);
+        const formattedDate = dateObj.toLocaleDateString('en-IN', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+
+        const statusClass = `status-${log.status.toLowerCase()}`;
+        
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.onclick = (e) => {
+          // If clicked action menu button, don't open slide details panel
+          if (e.target.closest('.dropdown-trigger')) return;
+          openDetailsSlide(log);
+        };
+
+        row.innerHTML = `
+          <td>${formattedDate}</td>
+          <td><b>#${escapeHtml(log.order_id)}</b></td>
+          <td>₹${parseFloat(log.base_amount).toFixed(2)}</td>
+          <td><b>₹${parseFloat(log.final_amount).toFixed(2)}</b></td>
+          <td><code style="background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">${escapeHtml(log.assigned_upi)}</code></td>
+          <td><span class="status-badge ${statusClass}">${escapeHtml(log.status)}</span></td>
+          <td><code>${escapeHtml(log.utr_number || 'WAITING')}</code></td>
+          <td>
+            <button class="dropdown-trigger" data-oid="${escapeHtml(log.order_id)}" data-amt="${log.final_amount}" data-utr="${escapeHtml(log.utr_number || '')}" onclick="event.stopPropagation(); triggerRowActions(this, this.dataset.oid, this.dataset.amt, this.dataset.utr)">•••</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Logs real-time search & filters
+    function filterLogs() {
+      const query = document.getElementById('search-logs-input').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('filter-logs-status').value;
+
+      const filtered = localLogs.filter(log => {
+        const matchesQuery = log.order_id.toLowerCase().includes(query) || 
+                             log.assigned_upi.toLowerCase().includes(query) ||
+                             (log.utr_number && log.utr_number.includes(query));
+        
+        const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
+
+        return matchesQuery && matchesStatus;
+      });
+
+      renderLogs(filtered);
+    }
+
+    // Dynamic Chart renderer (Stripe-like Line Graphs)
+    let transactionChart = null;
+    function updateDashboardChart(logs) {
+      const ctx = document.getElementById('analytics-chart').getContext('2d');
+      
+      const chartData = {
+        labels: [],
+        data: []
+      };
+      
+      // Filter only approved transactions for clean charts representation
+      const approvedOnly = logs.filter(l => l.status === 'APPROVED');
+      const sortedLogs = [...approvedOnly].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+      
+      const last10 = sortedLogs.slice(-10);
+      last10.forEach(l => {
+        const d = new Date(l.created_at);
+        chartData.labels.push(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        chartData.data.push(parseFloat(l.final_amount));
+      });
+
+      if (chartData.labels.length === 0) {
+        chartData.labels = ['10:00 AM', '12:00 PM', '02:00 PM', '04:00 PM', '06:00 PM'];
+        chartData.data = [0, 0, 0, 0, 0];
+      }
+
+      if (transactionChart) {
+        transactionChart.destroy();
+      }
+
+      // Gradient background glow effect
+      const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+      gradient.addColorStop(0, 'rgba(0, 242, 254, 0.25)');
+      gradient.addColorStop(1, 'rgba(0, 242, 254, 0)');
+
+      transactionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: 'Transaction Value (₹)',
+            data: chartData.data,
+            borderColor: '#00f2fe',
+            backgroundColor: gradient,
+            borderWidth: 2.5,
+            pointBackgroundColor: '#8a2be2',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 6,
+            fill: true,
+            tension: 0.35
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.04)' },
+              ticks: { color: '#a29db8', font: { family: 'Inter', size: 9 } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.04)' },
+              ticks: { color: '#a29db8', font: { family: 'Inter', size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Modal windows toggling
+    function openAddModal() {
+      const modal = document.getElementById('add-vpa-modal');
+      modal.style.display = 'flex';
+      setTimeout(() => modal.style.opacity = '1', 10);
+    }
+    function closeAddModal() {
+      const modal = document.getElementById('add-vpa-modal');
+      modal.style.opacity = '0';
+      setTimeout(() => modal.style.display = 'none', 300);
+      document.getElementById('add-vpa-form').reset();
+    }
+
+    function openEditModal(upiId, dailyLimit, dailyCount, weight) {
+      document.getElementById('edit-vpa-id').value = upiId;
+      document.getElementById('edit-vpa-display').value = upiId;
+      document.getElementById('edit-amount-limit').value = dailyLimit;
+      document.getElementById('edit-count-limit').value = dailyCount;
+      document.getElementById('edit-vpa-weight').value = weight || 1;
+      
+      const modal = document.getElementById('edit-vpa-modal');
+      modal.style.display = 'flex';
+      setTimeout(() => modal.style.opacity = '1', 10);
+    }
+    function closeEditModal() {
+      const modal = document.getElementById('edit-vpa-modal');
+      modal.style.opacity = '0';
+      setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // Slide-over transaction details toggling
+    let activeDetailTransaction = null;
+    function openDetailsSlide(log) {
+      activeDetailTransaction = log;
+      
+      document.getElementById('det-order-id').textContent = log.order_id;
+      document.getElementById('det-status').textContent = log.status;
+      document.getElementById('det-base-amount').textContent = `₹${parseFloat(log.base_amount).toFixed(2)}`;
+      document.getElementById('det-final-amount').textContent = `₹${parseFloat(log.final_amount).toFixed(2)}`;
+      document.getElementById('det-vpa').textContent = log.assigned_upi;
+      document.getElementById('det-utr').textContent = log.utr_number || 'AWAITING RECONCILIATION';
+      
+      const crDate = new Date(log.created_at).toLocaleString('en-IN');
+      const expDate = new Date(log.expires_at).toLocaleString('en-IN');
+      
+      document.getElementById('det-created-at').textContent = crDate;
+      document.getElementById('det-expires-at').textContent = expDate;
+
+      document.getElementById('detail-slide-panel').classList.add('active');
+    }
+
+    function closeDetailsSlide() {
+      document.getElementById('detail-slide-panel').classList.remove('active');
+      activeDetailTransaction = null;
+    }
+
+    // Context row actions popup
+    function triggerRowActions(btn, orderId, finalAmount, utr) {
+      const choice = confirm(`Select Action for Order #${orderId}:\n\n- Press OK to Copy UTR reference number to clipboard.\n- Press Cancel to open simulated SMS webhook reconciliation.`);
+      if (choice) {
+        if (!utr) {
+          alert('Reconciliation pending. UTR not submitted yet.');
+          return;
+        }
+        navigator.clipboard.writeText(utr);
+        alert('UTR copied to clipboard!');
+      } else {
+        switchTab(null, 'tab-developer-guide');
+        const simulatedMessage = `Dear Customer, your a/c is credited with INR ${finalAmount} on 06-07-26 by UPI Ref ${utr || '123456789012'}`;
+        document.getElementById('sim-sms-body').value = simulatedMessage;
+      }
+    }
+
+    // Populate from slide panel
+    function populateAndFireSim() {
+      if (!activeDetailTransaction) return;
+      const amt = parseFloat(activeDetailTransaction.final_amount).toFixed(2);
+      const utr = activeDetailTransaction.utr_number || '987654321012';
+      
+      switchTab(null, 'tab-developer-guide');
+      closeDetailsSlide();
+      
+      const simulatedMessage = `Dear Customer, your a/c is credited with INR ${amt} on 06-07-26 by UPI Ref ${utr}`;
+      document.getElementById('sim-sms-body').value = simulatedMessage;
+    }
+
+    // Webhook SMS trigger simulation call
+    async function simulateSmsCallback() {
+      const smsBodyVal = document.getElementById('sim-sms-body').value.trim();
+      const targetUpi = document.getElementById('sim-target-upi').value;
+      if (!smsBodyVal) {
+        alert('Please fill mock SMS message body contents.');
+        return;
+      }
+
+      try {
+        let url = `/api/pay/sms-webhook/${currentUser.id}`;
+        if (targetUpi) {
+          url += `/${encodeURIComponent(targetUpi)}`;
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender: 'VK-SBIUPI',
+            message: smsBodyVal
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to reconcile.');
+        }
+
+        alert(`Simulation Credit Match Successful!\nReconciled Order: ${data.orderId}\nCaptured Amount: ₹${data.amount}\nUTR Logged: ${data.utr}`);
+        document.getElementById('sim-sms-body').value = '';
+        
+        await fetchStats();
+        await fetchLogs();
+      } catch (err) {
+        alert('Reconciliation Alert: ' + err.message);
+      }
+    }
+
+    // Copy code snippet to clipboard
+    function copyCode(btn) {
+      const codeElement = btn.nextElementSibling;
+      const range = document.createRange();
+      range.selectNode(codeElement);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      
+      try {
+        document.execCommand('copy');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text', err);
+      }
+      window.getSelection().removeAllRanges();
+    }
+
+    // Fetch Configurations settings
+    async function fetchSettings() {
+      try {
+        const res = await apiRequest('/api/config');
+        const config = await res.json();
+        
+        document.getElementById('settings-shopify-store').value = config.shopifyStore || '';
+        document.getElementById('settings-shopify-token').value = config.shopifyToken || '';
+        document.getElementById('settings-gateway-url').value = config.gatewayUrl || '';
+        document.getElementById('settings-business-name').value = config.businessName || '';
+        document.getElementById('settings-logo-url').value = config.logoUrl || '';
+        document.getElementById('settings-primary-color').value = config.primaryColor || '#8a2be2';
+        document.getElementById('settings-primary-color-text').value = config.primaryColor || '#8a2be2';
+        document.getElementById('settings-bg-color').value = config.bgColor || '#ffffff';
+        document.getElementById('settings-bg-color-text').value = config.bgColor || '#ffffff';
+
+        updateLogoPreview(config.logoUrl || '');
+
+        document.getElementById('settings-webhook-url').value = config.webhookUrl || '';
+        document.getElementById('settings-api-key').value = config.apiKey || '';
+        document.getElementById('settings-api-key').type = 'password';
+        isKeyRevealed = false;
+
+        // Checkout customization fields
+        document.getElementById('settings-timer-minutes').value = config.checkoutTimerMinutes || 7;
+        const layoutSelect = document.getElementById('settings-layout-theme');
+        if (layoutSelect) layoutSelect.value = config.checkoutLayout || 'glassmorphism';
+
+        // Settlement bank fields
+        document.getElementById('settlement-bank-name').value = config.settlementBank || '';
+        document.getElementById('settlement-acc-num').value = config.settlementAccount || '';
+        document.getElementById('settlement-ifsc-code').value = config.settlementIfsc || '';
+        
+        const docApiUrlEl = document.getElementById('doc-api-url');
+        if (docApiUrlEl) docApiUrlEl.textContent = window.location.origin;
+      } catch (err) {
+        console.error('[Settings] Error fetching config:', err.message);
+      }
+    }
+
+    // Save Configurations settings submit handler
+    async function saveSettings(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-settings-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      const shopifyStore = document.getElementById('settings-shopify-store').value.trim();
+      const shopifyToken = document.getElementById('settings-shopify-token').value.trim();
+      const gatewayUrl = document.getElementById('settings-gateway-url').value.trim();
+      const businessName = document.getElementById('settings-business-name').value.trim();
+      const logoUrl = document.getElementById('settings-logo-url').value.trim();
+      const primaryColor = document.getElementById('settings-primary-color').value;
+      const bgColor = document.getElementById('settings-bg-color').value;
+      const checkoutTimerMinutes = parseInt(document.getElementById('settings-timer-minutes').value) || 7;
+      const checkoutLayout = document.getElementById('settings-layout-theme').value;
+
+      try {
+        const res = await apiRequest('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({ shopifyStore, shopifyToken, gatewayUrl, businessName, logoUrl, primaryColor, bgColor, checkoutTimerMinutes, checkoutLayout })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to save settings');
+        }
+
+        alert('Store profile configuration saved successfully!');
+        await fetchSettings();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+      }
+    }
+
+    // Save Settlement Bank Credentials
+    async function saveSettlementDetails(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-settlement-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      const settlementBank = document.getElementById('settlement-bank-name').value.trim();
+      const settlementAccount = document.getElementById('settlement-acc-num').value.trim();
+      const settlementIfsc = document.getElementById('settlement-ifsc-code').value.trim();
+
+      try {
+        const res = await apiRequest('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({ settlementBank, settlementAccount, settlementIfsc })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to save settlement details');
+        }
+
+        alert('Settlement payout bank credentials saved successfully!');
+        await fetchSettings();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+      }
+    }
+
+    function handleLogoUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Logo image file must be smaller than 2MB.');
+        input.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Str = e.target.result;
+        document.getElementById('settings-logo-url').value = base64Str;
+        updateLogoPreview(base64Str);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleLogoUrlInput(val) {
+      updateLogoPreview(val.trim());
+    }
+
+    function updateLogoPreview(srcVal) {
+      const img = document.getElementById('settings-logo-preview-img');
+      const placeholder = document.getElementById('settings-logo-preview-placeholder');
+      
+      if (srcVal) {
+        img.src = srcVal;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+        placeholder.style.display = 'block';
+      }
+      updateLivePreview();
+    }
+
+    function syncColorInput(pickerId, val) {
+      const picker = document.getElementById(pickerId);
+      const textInput = document.getElementById(pickerId + '-text');
+      if (val.match(/^#[0-9a-fA-F]{6}$/)) {
+        picker.value = val;
+        textInput.value = val;
+        updateLivePreview();
+      }
+    }
+
+    function updateLivePreview() {
+      const businessName = document.getElementById('settings-business-name').value.trim() || 'P2P Payments';
+      const logoUrl = document.getElementById('settings-logo-url').value.trim();
+      
+      const primaryColor = document.getElementById('settings-primary-color').value;
+      document.getElementById('settings-primary-color-text').value = primaryColor;
+      
+      const bgColor = document.getElementById('settings-bg-color').value;
+      document.getElementById('settings-bg-color-text').value = bgColor;
+
+      document.getElementById('preview-modal-bg').style.backgroundColor = bgColor;
+      document.getElementById('preview-business-name').textContent = businessName;
+      document.getElementById('preview-business-name').style.color = primaryColor;
+      document.getElementById('preview-amount').style.color = primaryColor;
+      document.getElementById('preview-timer').style.color = primaryColor;
+      document.getElementById('preview-qr-border').style.borderColor = primaryColor;
+      document.getElementById('preview-pay-btn').style.backgroundColor = primaryColor;
+      
+      const logoImg = document.getElementById('preview-logo');
+      if (logoUrl) {
+        logoImg.src = logoUrl;
+        logoImg.style.display = 'block';
+      } else {
+        logoImg.style.display = 'none';
+        logoImg.src = '';
+      }
+    }
+
+    // Toggle reveal key
+    function toggleApiKeyReveal() {
+      const apiKeyInput = document.getElementById('settings-api-key');
+      isKeyRevealed = !isKeyRevealed;
+      apiKeyInput.type = isKeyRevealed ? 'text' : 'password';
+    }
+
+    // Copy api key
+    function copyApiKey() {
+      const apiKeyInput = document.getElementById('settings-api-key');
+      const tempRange = apiKeyInput.type;
+      
+      apiKeyInput.type = 'text';
+      apiKeyInput.select();
+      apiKeyInput.setSelectionRange(0, 99999);
+      
+      try {
+        navigator.clipboard.writeText(apiKeyInput.value);
+        showToast('API Key copied to clipboard!', 'success');
+      } catch (err) {
+        document.execCommand('copy');
+        showToast('API Key copied to clipboard!', 'success');
+      }
+      apiKeyInput.type = tempRange;
+    }
+
+    // API Key Rotation call
+    async function rotateApiKey() {
+      if (!confirm('Are you sure you want to rotate your API Key? All existing integrations using the current key will stop working immediately.')) {
+        return;
+      }
+
+      const rotateBtn = document.getElementById('rotate-key-btn');
+      const originalText = rotateBtn.textContent;
+      rotateBtn.textContent = 'Rotating...';
+      rotateBtn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({ rotateApiKey: true })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to rotate API Key.');
+        }
+
+        const data = await res.json();
+        const rawKey = data.apiKey;
+        
+        const apiKeyInput = document.getElementById('settings-api-key');
+        apiKeyInput.type = 'text';
+        apiKeyInput.value = rawKey;
+        isKeyRevealed = true;
+
+        showToast('API Key rotated successfully! Copy the new key from settings.', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        rotateBtn.textContent = originalText;
+        rotateBtn.disabled = false;
+      }
+    }
+
+    // Webhook persistence config save call
+    async function saveWebhookUrl() {
+      const webhookUrl = document.getElementById('settings-webhook-url').value.trim();
+      const saveBtn = document.getElementById('save-webhook-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({ webhookUrl })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to save Webhook URL.');
+        }
+
+        alert('Webhook URL configuration saved successfully!');
+        await fetchSettings();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+      }
+    }
+
+    // Auto-Integrate Shopify webhook registrars
+    async function autoIntegrateShopify() {
+      const integrateBtn = document.getElementById('auto-integrate-btn');
+      const originalText = integrateBtn.textContent;
+      integrateBtn.textContent = 'Integrating...';
+      integrateBtn.disabled = true;
+
+      const gatewayUrl = document.getElementById('settings-gateway-url').value.trim();
+
+      if (!gatewayUrl) {
+        alert('Please enter your Gateway Public URL first.');
+        integrateBtn.textContent = originalText;
+        integrateBtn.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await apiRequest('/api/shopify/auto-integrate', {
+          method: 'POST',
+          body: JSON.stringify({ gatewayUrl })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to auto-integrate.');
+        }
+
+        const data = await res.json();
+        alert(`SaaS Integration Successful!\nConnected Store: ${data.shopName}\nWebhook Subscription ID: ${data.webhookId}`);
+        
+        await fetchSettings();
+      } catch (err) {
+        alert('Integration Error: ' + err.message);
+      } finally {
+        integrateBtn.textContent = originalText;
+        integrateBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

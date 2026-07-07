@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure UPI Checkout</title>
+  
+  <!-- Import Google Fonts (Outfit) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #8a2be2;
+      --bg-color: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text-color: #1a1a2e;
+      --text-muted: #5e6e82;
+      --border-color: #e2e8f0;
+      --success-color: #00ca72;
+    }
+
+    /* ========================================== */
+    /* THEME SYSTEM STYLES */
+    /* ========================================== */
+    body.theme-glassmorphism {
+      background: #0d0b18;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(138, 43, 226, 0.25) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(0, 242, 254, 0.15) 0px, transparent 50%);
+    }
+    body.theme-glassmorphism .checkout-container {
+      background: rgba(13, 11, 24, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      color: #ffffff;
+    }
+    body.theme-glassmorphism .checkout-header, 
+    body.theme-glassmorphism .instruction-list li, 
+    body.theme-glassmorphism .utr-container {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    body.theme-glassmorphism .merchant-name,
+    body.theme-glassmorphism .amount-display,
+    body.theme-glassmorphism .instruction-text strong {
+      color: #ffffff !important;
+    }
+    body.theme-glassmorphism .text-muted,
+    body.theme-glassmorphism .order-ref,
+    body.theme-glassmorphism .amount-label,
+    body.theme-glassmorphism .instruction-step {
+      color: #a0aec0 !important;
+    }
+    body.theme-glassmorphism input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    body.theme-minimalist {
+      background: #f4f6f8;
+    }
+    body.theme-minimalist .checkout-container {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      color: #1a1a2e;
+    }
+    body.theme-minimalist .checkout-header,
+    body.theme-minimalist .instruction-list li,
+    body.theme-minimalist .utr-container {
+      border-color: #edf2f7;
+    }
+    body.theme-minimalist input {
+      background: #f7fafc;
+      border: 1px solid #cbd5e0;
+      color: #1a1a2e;
+    }
+
+    body.theme-neon {
+      background: #000000;
+      background-image: linear-gradient(0deg, rgba(0, 242, 254, 0.05) 0%, transparent 100%);
+    }
+    body.theme-neon .checkout-container {
+      background: #050505;
+      border: 2px solid var(--primary-color, #00f2fe);
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+      color: #00ffcc;
+    }
+    body.theme-neon .checkout-header,
+    body.theme-neon .instruction-list li,
+    body.theme-neon .utr-container {
+      border-color: rgba(0, 242, 254, 0.2);
+    }
+    body.theme-neon .merchant-name,
+    body.theme-neon .amount-display,
+    body.theme-neon .instruction-text strong {
+      color: #ffffff !important;
+      text-shadow: 0 0 5px var(--primary-color);
+    }
+    body.theme-neon .amount-label,
+    body.theme-neon .instruction-step {
+      color: #00ffcc !important;
+    }
+    body.theme-neon input {
+      background: #0d0d0d;
+      border: 1px solid #00f2fe;
+      color: #00ffcc;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0c20;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(138, 43, 226, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(0, 202, 114, 0.1) 0px, transparent 50%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--text-color);
+    }
+
+    .checkout-container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Section */
+    .checkout-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-container {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7fafc;
+      overflow: hidden;
+    }
+
+    .logo-container img {
+      max-width: 85%;
+      max-height: 85%;
+      object-fit: contain;
+    }
+
+    .merchant-info {
+      flex: 1;
+    }
+
+    .merchant-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .order-ref {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    /* Body/Billing details */
+    .checkout-body {
+      padding: 1.75rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .amount-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .amount-display {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--primary-color);
+      line-height: 1;
+    }
+
+    .amount-breakdown {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      background: rgba(0, 0, 0, 0.03);
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Expiry countdown banner */
+    .timer-banner {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    /* QR Code container */
+    .qr-card {
+      margin: 1.5rem 0;
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .qr-card img {
+      width: 170px;
+      height: 170px;
+      display: block;
+    }
+
+    .scan-instruction {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* App Selection Grid */
+    .apps-section {
+      width: 100%;
+      margin-top: 0.5rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .app-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      height: 44px;
+      background: #ffffff;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .app-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      border-color: var(--primary-color);
+    }
+
+    .app-btn img {
+      height: 20px;
+      max-width: 80%;
+      object-fit: contain;
+    }
+
+    /* UTR Verification Panel */
+    .utr-section {
+      width: 100%;
+      margin-top: 1.25rem;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 14px;
+      padding: 1rem;
+      border: 1px dashed var(--border-color);
+    }
+
+    .utr-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .utr-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .utr-input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .utr-input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .utr-submit {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary-color);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .utr-submit:hover {
+      opacity: 0.9;
+    }
+
+    .utr-submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .utr-feedback {
+      font-size: 0.75rem;
+      margin-top: 0.4rem;
+      display: none;
+    }
+
+    /* Success overlay */
+    .success-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .success-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(0, 202, 114, 0.1);
+      color: var(--success-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .success-heading {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-msg {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Cancelled/Expired overlay */
+    .error-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .error-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .error-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(229, 62, 62, 0.1);
+      color: #e53e3e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Loading state */
+    .loading-screen {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(138, 43, 226, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="checkout-container" id="checkout-card" style="display: none;">
+    <!-- Success Screen Overlay -->
+    <div class="success-overlay" id="success-screen">
+      <div class="success-icon">✓</div>
+      <div class="success-heading">Payment Successful</div>
+      <div class="success-msg" id="success-msg">Your transaction was reconciled and marked as paid successfully!</div>
+      <button class="utr-submit" style="width: 100%; max-width: 200px;" onclick="try { window.close(); } catch(e) {} setTimeout(() => { this.textContent = 'You may close this tab manually'; this.disabled = true; }, 300);">Close Window</button>
+    </div>
+
+    <!-- Expired Screen Overlay -->
+    <div class="error-overlay" id="expired-screen">
+      <div class="error-icon">✕</div>
+      <div class="success-heading" style="color: #e53e3e;">Transaction Closed</div>
+      <div class="success-msg">This payment session has expired or was manually cancelled. Please return to the store and initiate a new checkout.</div>
+      <button class="utr-submit" style="width: 100%; max-width: 200px; background: #e53e3e;" onclick="try { window.close(); } catch(e) {} setTimeout(() => { this.textContent = 'You may close this tab manually'; this.disabled = true; }, 300);">Close Window</button>
+    </div>
+
+    <!-- Header -->
+    <div class="checkout-header">
+      <div class="logo-container" id="logo-wrapper">
+        <span id="logo-placeholder">🖼️</span>
+        <img id="logo-img" style="display: none;">
+      </div>
+      <div class="merchant-info">
+        <div class="merchant-name" id="merchant-title">P2P Payments</div>
+        <div class="order-ref" id="order-reference">Order ID: -</div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="checkout-body">
+      <div class="amount-title">Amount to Pay</div>
+      <div class="amount-display" id="display-amount">₹0.00</div>
+      <div class="amount-breakdown" id="display-breakdown">Base: ₹0.00 + Gateway fees: ₹0.00</div>
+
+      <div class="timer-banner" id="countdown-banner">
+        <span>⏳</span> <span id="timer-text">Expires in 07:00</span>
+      </div>
+
+      <!-- QR -->
+      <div class="qr-card">
+        <img id="qr-img" src="" alt="UPI QR Code">
+      </div>
+      <div class="scan-instruction">Scan this QR code using any UPI app to pay</div>
+
+      <!-- Direct UPI app launchers -->
+      <div class="apps-section">
+        <div class="section-title">Or pay directly using your mobile app</div>
+        <div class="apps-grid">
+          <a id="link-gpay" class="app-btn">
+            <img src="/brand-logos/gpay.svg" alt="Google Pay">
+          </a>
+          <a id="link-phonepe" class="app-btn">
+            <img src="/brand-logos/phonepe.svg" alt="PhonePe">
+          </a>
+          <a id="link-paytm" class="app-btn">
+            <img src="/brand-logos/paytm.svg" alt="Paytm">
+          </a>
+          <a id="link-bhim" class="app-btn">
+            <img src="/brand-logos/bhim.svg" alt="BHIM">
+          </a>
+        </div>
+      </div>
+
+      <!-- UTR Verification -->
+      <div class="utr-section">
+        <div class="utr-title">Submit UTR Reference (Fast-track verification)</div>
+        <form class="utr-form" id="utr-form" onsubmit="submitUtr(event)">
+          <input type="text" id="utr-input" class="utr-input" placeholder="Enter 12-digit UTR number" maxlength="12" pattern="\d{12}" required>
+          <button type="submit" id="utr-btn" class="utr-submit">Submit</button>
+        </form>
+        <div id="utr-feedback" class="utr-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="checkout-container loading-screen" id="loading-card">
+    <div class="spinner"></div>
+    <div style="font-weight: 500;">Loading payment gateway details...</div>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const orderId = pathParts[pathParts.length - 1];
+    let expiryTime = null;
+    let checkStatusInterval = null;
+    let timerInterval = null;
+
+    // Load Checkout Details
+    async function loadDetails() {
+      try {
+        const response = await fetch(`/api/pay/details/${encodeURIComponent(orderId)}`);
+        if (!response.ok) {
+          throw new Error('Failed to load transaction data.');
+        }
+
+        const data = await response.json();
+        
+        // 1. Populate UI variables
+        document.getElementById('merchant-title').textContent = data.businessName || 'P2P Payments';
+        document.getElementById('order-reference').textContent = `Order ID: #${data.orderId}`;
+        
+        const baseVal = parseFloat(data.baseAmount);
+        const finalVal = parseFloat(data.finalAmount);
+        const feesVal = finalVal - baseVal;
+        
+        document.getElementById('display-amount').textContent = `₹${finalVal.toFixed(2)}`;
+        document.getElementById('display-breakdown').textContent = `Base: ₹${baseVal.toFixed(2)} + Gateway fees: ₹${feesVal.toFixed(2)}`;
+
+        // 2. Set colors dynamically
+        if (data.primaryColor) {
+          document.documentElement.style.setProperty('--primary-color', data.primaryColor);
+        }
+        if (data.bgColor) {
+          document.documentElement.style.setProperty('--card-bg', data.bgColor);
+        }
+
+        // Apply Layout theme class
+        if (data.checkoutLayout) {
+          document.body.className = `theme-${data.checkoutLayout}`;
+        }
+
+        // 3. Set logo preview
+        const logoImg = document.getElementById('logo-img');
+        const logoPlc = document.getElementById('logo-placeholder');
+        if (data.logoUrl) {
+          logoImg.src = data.logoUrl;
+          logoImg.style.display = 'block';
+          logoPlc.style.display = 'none';
+        } else {
+          logoImg.style.display = 'none';
+          logoPlc.style.display = 'block';
+        }
+
+        // 4. Generate dynamic QR Code string
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.upiString)}`;
+        document.getElementById('qr-img').src = qrApiUrl;
+
+        // 5. Populate UPI Deep-link App anchors
+        const query = data.upiString.substring(data.upiString.indexOf('?'));
+        document.getElementById('link-gpay').href = `gpay://upi/pay${query}`;
+        document.getElementById('link-phonepe').href = `phonepe://pay${query}`;
+        document.getElementById('link-paytm').href = `paytmmp://pay${query}`;
+        document.getElementById('link-bhim').href = `bhim://pay${query}`;
+
+        // Check if transaction is closed already
+        if (data.status === 'APPROVED') {
+          showSuccessScreen();
+          return;
+        } else if (data.status === 'CANCELLED') {
+          showExpiredScreen();
+          return;
+        }
+
+        // Initialize countdown timer
+        expiryTime = new Date(data.expiresAt).getTime();
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+
+        // Hide loader, show checkout card
+        document.getElementById('loading-card').style.display = 'none';
+        document.getElementById('checkout-card').style.display = 'flex';
+
+        // Start transaction status polling checks
+        checkStatusInterval = setInterval(pollTransactionStatus, 3000);
+
+      } catch (err) {
+        document.getElementById('loading-card').innerHTML = `
+          <div style="color: #e53e3e; font-size: 2rem; margin-bottom: 1rem;">✕</div>
+          <div style="font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem;">Checkout Error</div>
+          <div style="font-size: 0.9rem;">${err.message || 'Transaction details not found or closed.'}</div>
+        `;
+      }
+    }
+
+    // Submit UTR reference number
+    async function submitUtr(e) {
+      e.preventDefault();
+      const utrInput = document.getElementById('utr-input');
+      const utrVal = utrInput.value.trim();
+      const feedback = document.getElementById('utr-feedback');
+      const submitBtn = document.getElementById('utr-btn');
+
+      if (!/^\d{12}$/.test(utrVal)) {
+        showFeedback('UTR must be a 12-digit number.', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch('/api/pay/submit-utr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, utrNumber: utrVal })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to submit UTR.');
+        }
+
+        if (data.status === 'APPROVED') {
+          showSuccessScreen();
+        } else {
+          showFeedback('UTR submitted successfully! Awaiting verification.', 'success');
+          utrInput.value = '';
+        }
+      } catch (err) {
+        showFeedback(err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      }
+    }
+
+    // Poll status checks
+    async function pollTransactionStatus() {
+      try {
+        const res = await fetch(`/api/pay/check-status?orderId=${encodeURIComponent(orderId)}`);
+        if (!res.ok) return;
+        const txn = await res.json();
+        if (txn.status === 'APPROVED') {
+          clearInterval(checkStatusInterval);
+          showSuccessScreen();
+        } else if (txn.status === 'CANCELLED') {
+          clearInterval(checkStatusInterval);
+          showExpiredScreen();
+        }
+      } catch (e) {
+        console.error('Polling check failed:', e);
+      }
+    }
+
+    // Timer display calculations
+    function updateTimer() {
+      if (!expiryTime) return;
+      
+      const now = new Date().getTime();
+      const distance = expiryTime - now;
+
+      if (distance <= 0) {
+        document.getElementById('timer-text').textContent = 'Session Expired';
+        document.getElementById('timer-text').style.color = '#e53e3e';
+        clearInterval(checkStatusInterval);
+        showExpiredScreen();
+        return;
+      }
+
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      const formattedMin = String(minutes).padStart(2, '0');
+      const formattedSec = String(seconds).padStart(2, '0');
+
+      document.getElementById('timer-text').textContent = `Expires in ${formattedMin}:${formattedSec}`;
+    }
+
+    function showFeedback(text, type) {
+      const fb = document.getElementById('utr-feedback');
+      fb.textContent = text;
+      fb.style.display = 'block';
+      fb.style.color = type === 'success' ? '#00ca72' : '#e53e3e';
+    }
+
+    function showSuccessScreen() {
+      document.getElementById('success-screen').classList.add('active');
+    }
+
+    function showExpiredScreen() {
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      document.getElementById('expired-screen').classList.add('active');
+    }
+
+    // Run details loader on window parse
+    window.addEventListener('DOMContentLoaded', loadDetails);
+  </script>
+</body>
+</html>
