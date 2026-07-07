@@ -3489,9 +3489,13 @@
       }
 
       try {
+        const apiKey = getMerchantApiKey();
         let url = `/api/pay/sms-webhook/${currentUser.id}`;
         if (targetUpi) {
           url += `/${encodeURIComponent(targetUpi)}`;
+        }
+        if (apiKey) {
+          url += `?token=${encodeURIComponent(apiKey)}`;
         }
 
         const res = await fetch(url, {
@@ -3508,13 +3512,13 @@
           throw new Error(data.error || 'Failed to reconcile.');
         }
 
-        alert(`Simulation Credit Match Successful!\nReconciled Order: ${data.orderId}\nCaptured Amount: ₹${data.amount}\nUTR Logged: ${data.utr}`);
+        showToast(`Simulation Credit Match Successful! Reconciled Order: ${data.orderId}, Captured Amount: ₹${data.amount}, UTR Logged: ${data.utr}`, 'success');
         document.getElementById('sim-sms-body').value = '';
         
         await fetchStats();
         await fetchLogs();
       } catch (err) {
-        alert('Reconciliation Alert: ' + err.message);
+        showToast('Reconciliation Alert: ' + err.message, 'error');
       }
     }
 
