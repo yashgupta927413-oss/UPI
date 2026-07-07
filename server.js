@@ -341,7 +341,22 @@ app.post('/api/config', async (req, res) => {
     }
 
     const current = checkRes.rows[0];
-    const updatedStore = shopifyStore !== undefined ? shopifyStore.trim() : current.shopify_store;
+    
+    // Normalize empty strings to null for Shopify integration to satisfy UNIQUE constraint in DB
+    let updatedStore = current.shopify_store;
+    if (shopifyStore !== undefined) {
+      updatedStore = shopifyStore.trim() === '' ? null : shopifyStore.trim();
+    }
+
+    let updatedToken = current.shopify_token;
+    if (shopifyToken !== undefined) {
+      if (shopifyToken.trim() === '') {
+        updatedToken = null;
+      } else if (!shopifyToken.includes('******')) {
+        updatedToken = shopifyToken.trim();
+      }
+    }
+
     const updatedGateway = gatewayUrl !== undefined ? gatewayUrl.trim() : current.gateway_url;
     const updatedBusinessName = businessName !== undefined ? businessName.trim() : (current.business_name || 'P2P Payments');
     const updatedLogoUrl = logoUrl !== undefined ? logoUrl.trim() : (current.logo_url || '');
@@ -353,11 +368,6 @@ app.post('/api/config', async (req, res) => {
     const updatedSettlementBank = settlementBank !== undefined ? settlementBank.trim() : (current.settlement_bank || '');
     const updatedSettlementAccount = settlementAccount !== undefined ? settlementAccount.trim() : (current.settlement_account || '');
     const updatedSettlementIfsc = settlementIfsc !== undefined ? settlementIfsc.trim() : (current.settlement_ifsc || '');
-    
-    let updatedToken = current.shopify_token;
-    if (shopifyToken && !shopifyToken.includes('******')) {
-      updatedToken = shopifyToken.trim();
-    }
 
     let updatedApiKey = current.api_key;
     if (rotateApiKey === true || !current.api_key) {

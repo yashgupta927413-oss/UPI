@@ -1521,13 +1521,13 @@
             
             <form id="settings-form" onsubmit="saveSettings(event)">
               <div class="form-group">
-                <label for="settings-shopify-store">Shopify Store Domain</label>
-                <input type="text" id="settings-shopify-store" class="form-input" placeholder="e.g. store-name.myshopify.com" required>
-                <span class="stat-description">Used to match incoming extension calls to your merchant profile.</span>
+                <label for="settings-shopify-store">Shopify Store Domain (Optional)</label>
+                <input type="text" id="settings-shopify-store" class="form-input" placeholder="e.g. store-name.myshopify.com">
+                <span class="stat-description">Only needed if integrating with a Shopify store checkout.</span>
               </div>
               <div class="form-group">
-                <label for="settings-shopify-token">Shopify Admin API Access Token</label>
-                <input type="password" id="settings-shopify-token" class="form-input" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" required>
+                <label for="settings-shopify-token">Shopify Admin API Access Token (Optional)</label>
+                <input type="password" id="settings-shopify-token" class="form-input" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
               </div>
               <div class="form-group">
                 <label for="settings-gateway-url">Gateway Public URL (HTTPS Tunnel)</label>
@@ -3474,10 +3474,10 @@
           throw new Error(errData.error || 'Failed to save settings');
         }
 
-        alert('Store profile configuration saved successfully!');
+        showToast('Store profile configuration saved successfully!', 'success');
         await fetchSettings();
       } catch (err) {
-        alert('Error: ' + err.message);
+        showToast(err.message, 'error');
       } finally {
         saveBtn.textContent = originalText;
         saveBtn.disabled = false;
