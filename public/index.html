@@ -2421,6 +2421,20 @@
           const mins = Math.ceil(remSecs / 60);
           cooldownBadge = `<span class="status-badge" style="font-size: 0.65rem; background: #ff3b30; color: #fff; margin-left: 0.5rem; text-transform: uppercase; padding: 0.1rem 0.35rem; border-radius: 4px;">❄️ Cooldown ${mins}m</span>`;
         }
+
+        let connectionBadge = '';
+        if (vpa.last_ping) {
+          const pingDate = new Date(vpa.last_ping);
+          const diffMins = Math.round((new Date() - pingDate) / 60000);
+          let pingStr = '';
+          if (diffMins < 1) pingStr = 'Just now';
+          else if (diffMins < 60) pingStr = `${diffMins}m ago`;
+          else pingStr = pingDate.toLocaleDateString();
+          
+          connectionBadge = `<span class="status-badge status-approved" style="font-size: 0.62rem; background: #00ca72; color: #fff; padding: 0.1rem 0.35rem; border-radius: 4px;" title="Last SMS forward received at ${pingDate.toLocaleString()}">📶 Live (${pingStr})</span>`;
+        } else {
+          connectionBadge = `<span class="status-badge" style="font-size: 0.62rem; background: rgba(255,255,255,0.1); color: var(--color-text-subdued); padding: 0.1rem 0.35rem; border-radius: 4px;">⚠️ Unchecked</span>`;
+        }
         
         const card = document.createElement('div');
         card.className = 'bank-card';
@@ -2441,7 +2455,10 @@
           </div>
           
           <div>
-            <div class="bank-vpa">${safeUpiId}</div>
+            <div class="bank-vpa" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <span>${safeUpiId}</span>
+              ${connectionBadge}
+            </div>
             <div class="bank-holder">${safeHolder}</div>
           </div>
           
@@ -2468,8 +2485,8 @@
               <button class="btn btn-secondary btn-sm" data-upi="${safeUpiId}" data-limit="${limitAmt}" data-count="${vpa.daily_count_limit}" data-weight="${vpa.weight}" onclick="openEditModal(this.dataset.upi, parseFloat(this.dataset.limit), parseInt(this.dataset.count), parseInt(this.dataset.weight))">
                 Limits &amp; Weight
               </button>
-              <button class="btn btn-secondary btn-sm" data-upi="${safeUpiId}" onclick="copySmsHookUrl(this.dataset.upi)" title="Copy SMS Webhook URL specifically for this VPA">
-                🔗 Copy Hook
+              <button class="btn btn-secondary btn-sm" data-upi="${safeUpiId}" onclick="testSmsGateway(this.dataset.upi, event)" title="Send a test connection ping to this webhook URL to verify status">
+                ⚡ Test Webhook
               </button>
               <button class="btn btn-danger btn-sm" data-upi="${safeUpiId}" onclick="deleteVPA(this.dataset.upi)">
                 Delete
@@ -2594,6 +2611,48 @@
           document.body.removeChild(tempInput);
           showToast(`SMS Webhook URL copied for ${upiId}!`, 'success');
         });
+    }
+
+    // Trigger a test connection ping to the SMS webhook of a specific VPA
+    async function testSmsGateway(upiId, e) {
+      if (!currentUser) return;
+      const apiKey = getMerchantApiKey();
+      if (!apiKey) {
+        showToast('Please wait for settings to load before testing connection.', 'error');
+        return;
+      }
+      
+      const testBtn = e ? e.target : null;
+      const originalText = testBtn ? testBtn.textContent : '';
+      if (testBtn) {
+        testBtn.textContent = 'Testing...';
+        testBtn.disabled = true;
+      }
+      
+      try {
+        const response = await fetch(`/api/pay/sms-webhook/${currentUser.id}/${encodeURIComponent(upiId)}?token=${encodeURIComponent(apiKey)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ body: 'test-gateway-connection', test: true })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.test === true) {
+          showToast(`📶 Connection test successful for ${upiId}!`, 'success');
+          await fetchVPAPool();
+        } else {
+          throw new Error(data.error || 'Failed to authenticate connection test.');
+        }
+      } catch (err) {
+        showToast('Test failed: ' + err.message, 'error');
+      } finally {
+        if (testBtn) {
+          testBtn.textContent = originalText;
+          testBtn.disabled = false;
+        }
+      }
     }
 
     // Dynamic preview functions for Add VPA Modal

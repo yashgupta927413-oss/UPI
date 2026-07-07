@@ -291,6 +291,27 @@ function createPaymentRouter(dbPool) {
 
     const targetUpi = assignedUpiParam || req.query.upiId || req.query.upi || req.body.upiId || req.body.upi || null;
 
+    // Check if it is a gateway connection test ping (merchant checking setup)
+    const isTest = smsBody.trim().toLowerCase() === 'test' || smsBody.trim().toLowerCase() === 'ping' || smsBody.trim().toLowerCase().includes('test-gateway-connection') || req.body.test === true;
+    if (isTest) {
+      console.log(`[SMS Webhook - User #${userId}] Test connection ping received!`);
+      try {
+        if (targetUpi) {
+          await getDb().query('UPDATE personal_upi_pool SET last_ping = CURRENT_TIMESTAMP WHERE upi_id = $1 AND user_id = $2', [targetUpi.trim(), userId]);
+        } else {
+          await getDb().query('UPDATE personal_upi_pool SET last_ping = CURRENT_TIMESTAMP WHERE user_id = $1', [userId]);
+        }
+        return res.status(200).json({
+          success: true,
+          test: true,
+          message: 'SMS Gateway connection test successful! Webhook is reachable and authorized.'
+        });
+      } catch (pingErr) {
+        console.error('[SMS Webhook Test] Failed to update last_ping in DB:', pingErr.message);
+        return res.status(500).json({ error: 'Failed to record connection test ping.' });
+      }
+    }
+
     console.log(`[SMS Webhook - User #${userId}${targetUpi ? ` - UPI ${targetUpi}` : ''}] Received SMS: "${smsBody}"`);
 
     // Parse credit details from SMS

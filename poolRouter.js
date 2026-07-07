@@ -32,7 +32,7 @@ function createPoolRouter(dbPool) {
     try {
       const query = `
         SELECT p.upi_id, p.account_holder, p.daily_amount_limit, p.daily_count_limit, 
-               p.current_amount, p.current_count, p.is_active, p.weight, p.cooldown_until,
+               p.current_amount, p.current_count, p.is_active, p.weight, p.cooldown_until, p.last_ping,
                COALESCE(t.total_requests, 0)::int as total_requests,
                COALESCE(t.approved_requests, 0)::int as approved_requests,
                COALESCE(t.total_approved_volume, 0)::numeric as total_approved_volume

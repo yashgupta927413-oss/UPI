@@ -161,10 +161,11 @@ async function initializeDbPool(databaseUrl) {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS settlement_ifsc VARCHAR(50);
     `);
 
-    // Upgrade personal_upi_pool to support weights and automatic cooldown timers
+    // Upgrade personal_upi_pool to support weights, automatic cooldown timers, and connection pings
     await newPool.query(`
       ALTER TABLE personal_upi_pool ADD COLUMN IF NOT EXISTS weight INTEGER DEFAULT 1 NOT NULL;
       ALTER TABLE personal_upi_pool ADD COLUMN IF NOT EXISTS cooldown_until TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE personal_upi_pool ADD COLUMN IF NOT EXISTS last_ping TIMESTAMP WITH TIME ZONE;
     `);
 
     // Create unmatched_payments table (Paise Refund Assistant)
