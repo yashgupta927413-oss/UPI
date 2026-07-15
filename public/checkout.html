@@ -528,8 +528,12 @@
       </div>
 
       <!-- QR -->
-      <div class="qr-card">
+      <div class="qr-card" style="display: inline-flex; justify-content: center; align-items: center; position: relative; margin: 1.5rem auto;">
         <img id="qr-img" src="" alt="UPI QR Code">
+        <!-- Dynamic Centered Merchant Logo Overlay inside the QR code -->
+        <div id="qr-logo-overlay" style="position: absolute; width: 34px; height: 34px; background: #ffffff; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.18); display: none; align-items: center; justify-content: center; padding: 2px;">
+          <img id="qr-logo-img" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;">
+        </div>
       </div>
       <div class="scan-instruction">Scan this QR code using any UPI app to pay</div>
 
@@ -611,16 +615,25 @@
           document.body.className = `theme-${data.checkoutLayout}`;
         }
 
-        // 3. Set logo preview
+        // 3. Set logo preview & dynamic QR center logo overlay
         const logoImg = document.getElementById('logo-img');
         const logoPlc = document.getElementById('logo-placeholder');
+        const qrLogoOverlay = document.getElementById('qr-logo-overlay');
+        const qrLogoImg = document.getElementById('qr-logo-img');
+        
         if (data.logoUrl) {
           logoImg.src = data.logoUrl;
           logoImg.style.display = 'block';
           logoPlc.style.display = 'none';
+          
+          qrLogoImg.src = data.logoUrl;
+          qrLogoOverlay.style.display = 'flex';
         } else {
           logoImg.style.display = 'none';
           logoPlc.style.display = 'block';
+          
+          qrLogoImg.src = '';
+          qrLogoOverlay.style.display = 'none';
         }
 
         // 4. Generate dynamic QR Code string
