@@ -165,6 +165,51 @@ function initCronJobs(dbPool) {
     }
   });
 
+  // ==========================================
+  // Task C: Render Keep-Alive Self-Pinger
+  // Runs every 5 minutes to keep the Render free tier service active
+  // ==========================================
+  cron.schedule('*/5 * * * *', async () => {
+    console.log('[Cron Service] Running Render keep-alive pinger...');
+    const pool = getDb();
+    if (!pool) return;
+
+    try {
+      const dbRes = await pool.query("SELECT DISTINCT gateway_url FROM users WHERE gateway_url IS NOT NULL AND gateway_url != '';");
+      const urls = dbRes.rows.map(r => r.gateway_url);
+
+      if (process.env.RENDER_EXTERNAL_URL && !urls.includes(process.env.RENDER_EXTERNAL_URL)) {
+        urls.push(process.env.RENDER_EXTERNAL_URL);
+      }
+
+      if (urls.length === 0) {
+        console.log('[Cron Service] No gateway URLs configured for keep-alive pings.');
+        return;
+      }
+
+      const https = require('https');
+      const http = require('http');
+
+      for (let url of urls) {
+        // Ensure protocol prefix
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+
+        console.log(`[Cron Service] Pinging gateway URL: ${url}`);
+        const clientLib = url.startsWith('https') ? https : http;
+        
+        clientLib.get(url, (res) => {
+          console.log(`[Cron Service] Ping response from ${url}: ${res.statusCode}`);
+        }).on('error', (err) => {
+          console.warn(`[Cron Service] Ping failed for ${url}:`, err.message);
+        });
+      }
+    } catch (error) {
+      console.error('[Cron Service] Keep-alive pinger failed:', error.message);
+    }
+  });
+
   console.log('[Cron Service] Cron jobs initialized successfully.');
 }
 
